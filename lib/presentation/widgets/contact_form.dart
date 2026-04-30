@@ -76,9 +76,22 @@ class _ContactFormState extends State<ContactForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'Send a Message',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Share your requirement, idea, or role details.',
+            style: TextStyle(color: Color(0xFFB9C8E8)),
+          ),
+          const SizedBox(height: 14),
           TextFormField(
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Name'),
+            decoration: const InputDecoration(
+              labelText: 'Name',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
             validator: (value) => (value == null || value.trim().isEmpty)
                 ? 'Please enter your name'
                 : null,
@@ -86,7 +99,10 @@ class _ContactFormState extends State<ContactForm> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _emailController,
-            decoration: const InputDecoration(labelText: 'Email'),
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              prefixIcon: Icon(Icons.email_outlined),
+            ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Please enter your email';
@@ -101,7 +117,14 @@ class _ContactFormState extends State<ContactForm> {
           TextFormField(
             controller: _messageController,
             maxLines: 4,
-            decoration: const InputDecoration(labelText: 'Message'),
+            decoration: const InputDecoration(
+              labelText: 'Message',
+              alignLabelWithHint: true,
+              prefixIcon: Padding(
+                padding: EdgeInsets.only(bottom: 62),
+                child: Icon(Icons.chat_bubble_outline),
+              ),
+            ),
             validator: (value) => (value == null || value.trim().isEmpty)
                 ? 'Please enter a message'
                 : null,

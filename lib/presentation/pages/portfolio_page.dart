@@ -26,7 +26,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
   final _skillsKey = GlobalKey();
   final _contactKey = GlobalKey();
 
-  final _resumeUrl = 'https://drive.google.com/file/d/1eq772Rl_wuySqZ8ebj3BWSb_DAQO2ZHt/view?usp=drive_link';
+  final _resumeUrl =
+      'https://drive.google.com/file/d/1eq772Rl_wuySqZ8ebj3BWSb_DAQO2ZHt/view?usp=drive_link';
   final _githubUrl = 'https://github.com/supreethraj13';
   final _linkedInUrl = 'https://www.linkedin.com/in/supreeth-raj-42157929a';
   final _email = 'supreethrajs@gmail.com';
@@ -72,15 +73,27 @@ class _PortfolioPageState extends State<PortfolioPage> {
     required String title,
     required Widget child,
   }) {
+    final theme = Theme.of(context);
     return Container(
       key: key,
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 30),
+      margin: const EdgeInsets.symmetric(vertical: 16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0x66161B26),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF242B3A)),
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xCC141C2B), Color(0xAA0F1522)],
+        ),
+        border: Border.all(color: const Color(0xFF2A3650)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x38000000),
+            blurRadius: 20,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,10 +103,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
             label: title,
             child: Text(
               title,
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           child,
         ],
       ),
@@ -101,7 +116,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _heroSection(bool mobile) {
-    final avatarSize = mobile ? 116.0 : 168.0;
+    final avatarSize = mobile ? 120.0 : 176.0;
+    final titleSize = mobile ? 36.0 : 52.0;
     final avatar = ClipOval(
       child: Image.asset(
         'assets/images/supreeth_profile.jpg',
@@ -122,32 +138,63 @@ class _PortfolioPageState extends State<PortfolioPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
+        Text(
           'L D Supreeth Raj',
           style: TextStyle(
-            fontSize: 44,
+            fontSize: titleSize,
             fontWeight: FontWeight.w700,
-            height: 1.1,
+            letterSpacing: -0.8,
+            height: 1.06,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         const Text(
           'Flutter App Developer',
-          style: TextStyle(fontSize: 22, color: Colors.white70),
+          style: TextStyle(
+            fontSize: 20,
+            color: Color(0xFFB8C8E8),
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         const Text(
           'I build scalable Flutter applications with BLoC and Firebase, focused on performance, reliability, and impactful user experiences.',
-          style: TextStyle(fontSize: 16, color: Colors.white70, height: 1.5),
+          style: TextStyle(fontSize: 16, color: Color(0xFFD0DCFA), height: 1.6),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 10,
+          runSpacing: 10,
           children: [
-            Chip(label: Text(_location)),
-            Chip(label: Text(_email)),
-            Chip(label: Text(_phone)),
+            Chip(
+              avatar: const Icon(Icons.location_on_outlined, size: 16),
+              label: Text(_location),
+            ),
+            Chip(
+              avatar: const Icon(Icons.email_outlined, size: 16),
+              label: Text(_email),
+            ),
+            Chip(
+              avatar: const Icon(Icons.call_outlined, size: 16),
+              label: Text(_phone),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            FilledButton.icon(
+              onPressed: () => _openExternalUrl(_resumeUrl),
+              icon: const Icon(Icons.description_outlined),
+              label: const Text('View Resume'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => _scrollTo(_contactKey),
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('Let\'s Connect'),
+            ),
           ],
         ),
       ],
@@ -164,12 +211,30 @@ class _PortfolioPageState extends State<PortfolioPage> {
       );
     }
 
-    return Row(
-      children: [
-        Expanded(child: text),
-        const SizedBox(width: 24),
-        avatar,
-      ],
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0x5598B4FF), Color(0x2222D3EE)],
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: const Color(0xFF0E1523),
+        ),
+        child: Row(
+          children: [
+            Expanded(child: text),
+            const SizedBox(width: 24),
+            avatar,
+          ],
+        ),
+      ),
     );
   }
 
@@ -208,22 +273,27 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ),
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF2A3142)),
-              color: const Color(0x4419212E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF30405E)),
+              color: const Color(0x99202B40),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 10,
-                  height: 10,
+                  width: 30,
+                  height: 30,
                   margin: const EdgeInsets.only(top: 8),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF4CC9F0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7C9CFF).withValues(alpha: 0.22),
                     shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: Color(0xFFAAC0FF),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -235,15 +305,15 @@ class _PortfolioPageState extends State<PortfolioPage> {
                         item['title']!,
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 18,
+                          fontSize: 19,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         item['body']!,
                         style: const TextStyle(
-                          color: Colors.white70,
-                          height: 1.45,
+                          color: Color(0xFFD3DDF5),
+                          height: 1.55,
                         ),
                       ),
                     ],
@@ -295,18 +365,35 @@ class _PortfolioPageState extends State<PortfolioPage> {
             return Card(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
+                  horizontal: 12,
+                  vertical: 10,
                 ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: const Color(0x557C9CFF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        size: 16,
+                        color: Color(0xFFD8E4FF),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -457,16 +544,35 @@ class _PortfolioPageState extends State<PortfolioPage> {
   PreferredSizeWidget _buildAppBar(bool mobile) {
     final items = _navItems();
     if (mobile) {
-      return AppBar(title: const Text('Supreeth Raj'));
+      return AppBar(
+        title: const Text('Supreeth Raj'),
+        actions: [
+          IconButton(
+            onPressed: () => _openExternalUrl(_resumeUrl),
+            tooltip: 'Resume',
+            icon: const Icon(Icons.description_outlined),
+          ),
+        ],
+      );
     }
     return AppBar(
       title: const Text('Supreeth Raj'),
-      actions: items
-          .map(
-            (item) =>
-                TextButton(onPressed: item.onTap, child: Text(item.label)),
-          )
-          .toList(),
+      actions: [
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: TextButton(onPressed: item.onTap, child: Text(item.label)),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: FilledButton.icon(
+            onPressed: () => _openExternalUrl(_resumeUrl),
+            icon: const Icon(Icons.description_outlined),
+            label: const Text('Resume'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -477,7 +583,6 @@ class _PortfolioPageState extends State<PortfolioPage> {
       _NavItem('About', () => _scrollTo(_aboutKey)),
       _NavItem('Skills', () => _scrollTo(_skillsKey)),
       _NavItem('Contact', () => _scrollTo(_contactKey)),
-      _NavItem('Resume', () => _openExternalUrl(_resumeUrl)),
     ];
   }
 
@@ -514,83 +619,124 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       },
                     ),
                   ),
+                  ListTile(
+                    title: const Text('Resume'),
+                    leading: const Icon(Icons.description_outlined),
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      await _openExternalUrl(_resumeUrl);
+                    },
+                  ),
                 ],
               ),
             )
           : null,
-      body: BlocBuilder<ProjectBloc, ProjectState>(
-        builder: (context, state) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _sectionContainer(
-                      key: _homeKey,
-                      title: 'Home',
-                      child: _heroSection(mobile),
-                    ),
-                    _sectionContainer(
-                      key: _projectsKey,
-                      title: 'Projects',
-                      child: _projectSection(state),
-                    ),
-                    _sectionContainer(
-                      key: _aboutKey,
-                      title: 'About',
-                      child: _aboutStory(),
-                    ),
-                    _sectionContainer(
-                      key: _skillsKey,
-                      title: 'Skills',
-                      child: _skillsGrid(),
-                    ),
-                    _sectionContainer(
-                      key: _contactKey,
-                      title: 'Contact',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Reach me at $_email or $_phone. Open to internship and collaboration opportunities.',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: _linkedInUrl.isEmpty
-                                    ? null
-                                    : () => _openExternalUrl(_linkedInUrl),
-                                icon: const Icon(Icons.person),
-                                label: const Text('LinkedIn'),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: _githubUrl.isEmpty
-                                    ? null
-                                    : () => _openExternalUrl(_githubUrl),
-                                icon: const Icon(Icons.code),
-                                label: const Text('GitHub'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          ContactForm(submitLeadUseCase: _submitLeadUseCase),
-                        ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0A1020), Color(0xFF080A12)],
+          ),
+        ),
+        child: BlocBuilder<ProjectBloc, ProjectState>(
+          builder: (context, state) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionContainer(
+                        key: _homeKey,
+                        title: 'Home',
+                        child: _heroSection(mobile),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                      _sectionContainer(
+                        key: _projectsKey,
+                        title: 'Projects',
+                        child: _projectSection(state),
+                      ),
+                      _sectionContainer(
+                        key: _aboutKey,
+                        title: 'About',
+                        child: _aboutStory(),
+                      ),
+                      _sectionContainer(
+                        key: _skillsKey,
+                        title: 'Skills',
+                        child: _skillsGrid(),
+                      ),
+                      _sectionContainer(
+                        key: _contactKey,
+                        title: 'Contact',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
+                              style: TextStyle(
+                                color: Color(0xFFD0DCFA),
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                Chip(
+                                  avatar: const Icon(
+                                    Icons.email_outlined,
+                                    size: 16,
+                                  ),
+                                  label: Text(_email),
+                                ),
+                                Chip(
+                                  avatar: const Icon(
+                                    Icons.call_outlined,
+                                    size: 16,
+                                  ),
+                                  label: Text(_phone),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: _linkedInUrl.isEmpty
+                                      ? null
+                                      : () => _openExternalUrl(_linkedInUrl),
+                                  icon: const Icon(Icons.person),
+                                  label: const Text('LinkedIn'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: _githubUrl.isEmpty
+                                      ? null
+                                      : () => _openExternalUrl(_githubUrl),
+                                  icon: const Icon(Icons.code),
+                                  label: const Text('GitHub'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            ContactForm(submitLeadUseCase: _submitLeadUseCase),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
