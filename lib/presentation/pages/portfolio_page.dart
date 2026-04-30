@@ -12,14 +12,8 @@ import '../bloc/project_state.dart';
 import '../widgets/contact_form.dart';
 import '../widgets/project_card.dart';
 
-class PortfolioPage extends StatefulWidget {
-  const PortfolioPage({super.key});
-
-  @override
-  State<PortfolioPage> createState() => _PortfolioPageState();
-}
-
-class _PortfolioPageState extends State<PortfolioPage> {
+class PortfolioPage extends StatelessWidget {
+  PortfolioPage({super.key});
   final _homeKey = GlobalKey();
   final _projectsKey = GlobalKey();
   final _aboutKey = GlobalKey();
@@ -34,15 +28,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
   final _phone = '+91 7892496621';
   final _location = 'Bengaluru';
 
-  late final SubmitLeadUseCase _submitLeadUseCase;
-  late final FirebaseAnalytics _analytics;
-
-  @override
-  void initState() {
-    super.initState();
-    _submitLeadUseCase = getIt<SubmitLeadUseCase>();
-    _analytics = getIt<FirebaseAnalytics>();
-  }
+  final SubmitLeadUseCase _submitLeadUseCase = getIt<SubmitLeadUseCase>();
+  final FirebaseAnalytics _analytics = getIt<FirebaseAnalytics>();
 
   Future<void> _scrollTo(GlobalKey key) async {
     final context = key.currentContext;
@@ -69,6 +56,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _sectionContainer({
+    required BuildContext context,
     required Key key,
     required String title,
     required Widget child,
@@ -138,88 +126,64 @@ class _PortfolioPageState extends State<PortfolioPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _RevealOnBuild(
-          delayMs: 20,
-          beginOffset: const Offset(0, 0.06),
-          child: Text(
-            'L D Supreeth Raj',
-            style: TextStyle(
-              fontSize: titleSize,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.8,
-              height: 1.06,
-            ),
+        Text(
+          'L D Supreeth Raj',
+          style: TextStyle(
+            fontSize: titleSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.8,
+            height: 1.06,
           ),
         ),
         const SizedBox(height: 10),
-        const _RevealOnBuild(
-          delayMs: 90,
-          beginOffset: Offset(0, 0.06),
-          child: Text(
-            'Flutter App Developer',
-            style: TextStyle(
-              fontSize: 20,
-              color: Color(0xFFB8C8E8),
-              fontWeight: FontWeight.w600,
-            ),
+        const Text(
+          'Flutter App Developer',
+          style: TextStyle(
+            fontSize: 20,
+            color: Color(0xFFB8C8E8),
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 14),
-        const _RevealOnBuild(
-          delayMs: 150,
-          beginOffset: Offset(0, 0.06),
-          child: Text(
-            'I build scalable Flutter applications with BLoC and Firebase, focused on performance, reliability, and impactful user experiences.',
-            style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFFD0DCFA),
-              height: 1.6,
-            ),
-          ),
+        const Text(
+          'I build scalable Flutter applications with BLoC and Firebase, focused on performance, reliability, and impactful user experiences.',
+          style: TextStyle(fontSize: 16, color: Color(0xFFD0DCFA), height: 1.6),
         ),
         const SizedBox(height: 16),
-        _RevealOnBuild(
-          delayMs: 210,
-          beginOffset: const Offset(0, 0.06),
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              Chip(
-                avatar: const Icon(Icons.location_on_outlined, size: 16),
-                label: Text(_location),
-              ),
-              Chip(
-                avatar: const Icon(Icons.email_outlined, size: 16),
-                label: Text(_email),
-              ),
-              Chip(
-                avatar: const Icon(Icons.call_outlined, size: 16),
-                label: Text(_phone),
-              ),
-            ],
-          ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            Chip(
+              avatar: const Icon(Icons.location_on_outlined, size: 16),
+              label: Text(_location),
+            ),
+            Chip(
+              avatar: const Icon(Icons.email_outlined, size: 16),
+              label: Text(_email),
+            ),
+            Chip(
+              avatar: const Icon(Icons.call_outlined, size: 16),
+              label: Text(_phone),
+            ),
+          ],
         ),
         const SizedBox(height: 18),
-        _RevealOnBuild(
-          delayMs: 280,
-          beginOffset: const Offset(0, 0.06),
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              FilledButton.icon(
-                onPressed: () => _openExternalUrl(_resumeUrl),
-                icon: const Icon(Icons.description_outlined),
-                label: const Text('View Resume'),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => _scrollTo(_contactKey),
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('Let\'s Connect'),
-              ),
-            ],
-          ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            FilledButton.icon(
+              onPressed: () => _openExternalUrl(_resumeUrl),
+              icon: const Icon(Icons.description_outlined),
+              label: const Text('View Resume'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => _scrollTo(_contactKey),
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('Let\'s Connect'),
+            ),
+          ],
         ),
       ],
     );
@@ -282,69 +246,56 @@ class _PortfolioPageState extends State<PortfolioPage> {
     ];
 
     return Column(
-      children: items.asMap().entries.map((entry) {
-        final index = entry.key;
-        final item = entry.value;
-        return TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: 1),
-          duration: Duration(milliseconds: 450 + (index * 120)),
-          builder: (context, value, child) => Opacity(
-            opacity: value,
-            child: Transform.translate(
-              offset: Offset(0, (1 - value) * 12),
-              child: child,
-            ),
+      children: items.map((item) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF30405E)),
+            color: const Color(0x99202B40),
           ),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF30405E)),
-              color: const Color(0x99202B40),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  margin: const EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF7C9CFF).withValues(alpha: 0.22),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.chevron_right,
-                    size: 18,
-                    color: Color(0xFFAAC0FF),
-                  ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C9CFF).withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item['title']!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 19,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        item['body']!,
-                        style: const TextStyle(
-                          color: Color(0xFFD3DDF5),
-                          height: 1.55,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Color(0xFFAAC0FF),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['title']!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 19,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item['body']!,
+                      style: const TextStyle(
+                        color: Color(0xFFD3DDF5),
+                        height: 1.55,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       }).toList(),
@@ -386,42 +337,38 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ),
           itemBuilder: (context, index) {
             final name = skills[index];
-            return _RevealOnBuild(
-              delayMs: 40 + (index * 28),
-              beginOffset: const Offset(0, 0.08),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: const Color(0x557C9CFF),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.auto_awesome,
-                          size: 16,
-                          color: Color(0xFFD8E4FF),
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: const Color(0x557C9CFF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        size: 16,
+                        color: Color(0xFFD8E4FF),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -690,111 +637,88 @@ class _PortfolioPageState extends State<PortfolioPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _RevealOnBuild(
-                    delayMs: 30,
-                    child: _sectionContainer(
-                      key: _homeKey,
-                      title: 'Home',
-                      child: _heroSection(mobile),
-                    ),
+                  _sectionContainer(
+                    context: context,
+                    key: _homeKey,
+                    title: 'Home',
+                    child: _heroSection(mobile),
                   ),
-                  _RevealOnBuild(
-                    delayMs: 110,
-                    child: _sectionContainer(
-                      key: _projectsKey,
-                      title: 'Projects',
-                      child: _projectSection(),
-                    ),
+                  _sectionContainer(
+                    context: context,
+                    key: _projectsKey,
+                    title: 'Projects',
+                    child: _projectSection(),
                   ),
-                  _RevealOnBuild(
-                    delayMs: 180,
-                    child: _sectionContainer(
-                      key: _aboutKey,
-                      title: 'About',
-                      child: _aboutStory(),
-                    ),
+                  _sectionContainer(
+                    context: context,
+                    key: _aboutKey,
+                    title: 'About',
+                    child: _aboutStory(),
                   ),
-                  _RevealOnBuild(
-                    delayMs: 250,
-                    child: _sectionContainer(
-                      key: _skillsKey,
-                      title: 'Skills',
-                      child: _skillsGrid(),
-                    ),
+                  _sectionContainer(
+                    context: context,
+                    key: _skillsKey,
+                    title: 'Skills',
+                    child: _skillsGrid(),
                   ),
-                  _RevealOnBuild(
-                    delayMs: 320,
-                    child: _sectionContainer(
-                      key: _contactKey,
-                      title: 'Contact',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
-                            style: TextStyle(
-                              color: Color(0xFFD0DCFA),
-                              height: 1.5,
+                  _sectionContainer(
+                    context: context,
+                    key: _contactKey,
+                    title: 'Contact',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
+                          style: TextStyle(
+                            color: Color(0xFFD0DCFA),
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            Chip(
+                              avatar: const Icon(
+                                Icons.email_outlined,
+                                size: 16,
+                              ),
+                              label: Text(_email),
                             ),
-                          ),
-                          const SizedBox(height: 14),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              Chip(
-                                avatar: const Icon(
-                                  Icons.email_outlined,
-                                  size: 16,
-                                ),
-                                label: Text(_email),
-                              ),
-                              Chip(
-                                avatar: const Icon(
-                                  Icons.call_outlined,
-                                  size: 16,
-                                ),
-                                label: Text(_phone),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: _linkedInUrl.isEmpty
-                                    ? null
-                                    : () => _openExternalUrl(_linkedInUrl),
-                                icon: const Icon(Icons.person),
-                                label: const Text('LinkedIn'),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: _githubUrl.isEmpty
-                                    ? null
-                                    : () => _openExternalUrl(_githubUrl),
-                                icon: const Icon(Icons.code),
-                                label: const Text('GitHub'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 18),
-                          const _RevealOnBuild(
-                            delayMs: 120,
-                            beginOffset: Offset(0, 0.05),
-                            child: Divider(height: 1),
-                          ),
-                          const SizedBox(height: 16),
-                          _RevealOnBuild(
-                            delayMs: 170,
-                            beginOffset: const Offset(0, 0.05),
-                            child: ContactForm(
-                              submitLeadUseCase: _submitLeadUseCase,
+                            Chip(
+                              avatar: const Icon(Icons.call_outlined, size: 16),
+                              label: Text(_phone),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: _linkedInUrl.isEmpty
+                                  ? null
+                                  : () => _openExternalUrl(_linkedInUrl),
+                              icon: const Icon(Icons.person),
+                              label: const Text('LinkedIn'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: _githubUrl.isEmpty
+                                  ? null
+                                  : () => _openExternalUrl(_githubUrl),
+                              icon: const Icon(Icons.code),
+                              label: const Text('GitHub'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        const Divider(height: 1),
+                        const SizedBox(height: 16),
+                        ContactForm(submitLeadUseCase: _submitLeadUseCase),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -813,52 +737,4 @@ class _NavItem {
 
   final String label;
   final Future<void> Function() onTap;
-}
-
-class _RevealOnBuild extends StatefulWidget {
-  const _RevealOnBuild({
-    required this.child,
-    this.delayMs = 0,
-    this.beginOffset = const Offset(0, 0.04),
-  });
-
-  final Widget child;
-  final int delayMs;
-  final Offset beginOffset;
-
-  @override
-  State<_RevealOnBuild> createState() => _RevealOnBuildState();
-}
-
-class _RevealOnBuildState extends State<_RevealOnBuild> {
-  bool _visible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    Future<void>.delayed(Duration(milliseconds: widget.delayMs), () {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _visible = true;
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const duration = Duration(milliseconds: 520);
-    return AnimatedSlide(
-      offset: _visible ? Offset.zero : widget.beginOffset,
-      duration: duration,
-      curve: Curves.easeOutCubic,
-      child: AnimatedOpacity(
-        opacity: _visible ? 1 : 0,
-        duration: duration,
-        curve: Curves.easeOut,
-        child: widget.child,
-      ),
-    );
-  }
 }

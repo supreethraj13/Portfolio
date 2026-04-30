@@ -18,7 +18,7 @@ class PortfolioApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       home: BlocProvider(
         create: (_) => getIt<ProjectBloc>()..add(const LoadProjects()),
-        child: const PortfolioPage(),
+        child: PortfolioPage(),
       ),
     );
   }
