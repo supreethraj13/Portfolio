@@ -14,6 +14,38 @@ import '../widgets/project_card.dart';
 
 class PortfolioPage extends StatelessWidget {
   PortfolioPage({super.key});
+  static const List<Map<String, String>> _aboutItems = [
+    {
+      'title': 'Education',
+      'body':
+          'Pursuing BE in Information Science at Sir M Visvesvaraya Institute of Technology (2023-2027) with 8.1 GPA, after scoring 86% at MES Kishore Kendra PU College.',
+    },
+    {
+      'title': 'Experience',
+      'body':
+          'Mobile App Developer Intern at WhiterApps (Jan 2026 - Present), architecting cross-platform Flutter apps with BLoC and integrating Firebase for real-time sync, cloud storage, and secure auth.',
+    },
+    {
+      'title': 'Leadership & Learning',
+      'body':
+          'Solved 190+ LeetCode problems, mentored 25+ students in Flutter during CSOC, and contributed to TechHub and GLUG workshops and ideathons.',
+    },
+  ];
+  static const List<String> _skills = [
+    'Flutter',
+    'BLoC',
+    'Firebase Firestore',
+    'Provider',
+    'Dart',
+    'C/C++',
+    'Python',
+    'SQL',
+    'Google Maps API',
+    'SQLite',
+    'MongoDB',
+    'Git/GitHub',
+  ];
+
   final _homeKey = GlobalKey();
   final _projectsKey = GlobalKey();
   final _aboutKey = GlobalKey();
@@ -62,43 +94,34 @@ class PortfolioPage extends StatelessWidget {
     required Widget child,
   }) {
     final theme = Theme.of(context);
-    return Container(
+    return RepaintBoundary(
       key: key,
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xCC141C2B), Color(0xAA0F1522)],
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          color: const Color(0xCC141C2B),
+          border: Border.all(color: const Color(0xFF2A3650)),
         ),
-        border: Border.all(color: const Color(0xFF2A3650)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x38000000),
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Semantics(
-            header: true,
-            label: title,
-            child: Text(
-              title,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Semantics(
+              header: true,
+              label: title,
+              child: Text(
+                title,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 18),
-          child,
-        ],
+            const SizedBox(height: 18),
+            child,
+          ],
+        ),
       ),
     );
   }
@@ -227,26 +250,8 @@ class PortfolioPage extends StatelessWidget {
   }
 
   Widget _aboutStory() {
-    final items = <Map<String, String>>[
-      {
-        'title': 'Education',
-        'body':
-            'Pursuing BE in Information Science at Sir M Visvesvaraya Institute of Technology (2023-2027) with 8.1 GPA, after scoring 86% at MES Kishore Kendra PU College.',
-      },
-      {
-        'title': 'Experience',
-        'body':
-            'Mobile App Developer Intern at WhiterApps (Jan 2026 - Present), architecting cross-platform Flutter apps with BLoC and integrating Firebase for real-time sync, cloud storage, and secure auth.',
-      },
-      {
-        'title': 'Leadership & Learning',
-        'body':
-            'Solved 190+ LeetCode problems, mentored 25+ students in Flutter during CSOC, and contributed to TechHub and GLUG workshops and ideathons.',
-      },
-    ];
-
     return Column(
-      children: items.map((item) {
+      children: _aboutItems.map((item) {
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(18),
@@ -303,21 +308,6 @@ class PortfolioPage extends StatelessWidget {
   }
 
   Widget _skillsGrid() {
-    final skills = <String>[
-      'Flutter',
-      'BLoC',
-      'Firebase Firestore',
-      'Provider',
-      'Dart',
-      'C/C++',
-      'Python',
-      'SQL',
-      'Google Maps API',
-      'SQLite',
-      'MongoDB',
-      'Git/GitHub',
-    ];
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth > 900
@@ -325,54 +315,53 @@ class PortfolioPage extends StatelessWidget {
             : constraints.maxWidth > 600
             ? 3
             : 2;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: skills.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: 3.6,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemBuilder: (context, index) {
-            final name = skills[index];
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: const Color(0x557C9CFF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        size: 16,
-                        color: Color(0xFFD8E4FF),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+        const spacing = 8.0;
+        final tileWidth =
+            (constraints.maxWidth - ((crossAxisCount - 1) * spacing)) /
+            crossAxisCount;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: _skills.map((name) {
+            return SizedBox(
+              width: tileWidth,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0x557C9CFF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          size: 16,
+                          color: Color(0xFFD8E4FF),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
-          },
+          }).toList(),
         );
       },
     );
