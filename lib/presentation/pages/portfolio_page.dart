@@ -431,94 +431,105 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
   }
 
-  Widget _projectSection(ProjectState state) {
+  Widget _projectSection() {
     Widget buildProjectCards(List<ProjectEntity> projects) {
       return Column(
         children: projects.asMap().entries.map((entry) {
-          final index = entry.key;
           final project = entry.value;
           return Padding(
             padding: const EdgeInsets.only(bottom: 14),
-            child: _RevealOnBuild(
-              delayMs: 70 + (index * 120),
-              beginOffset: const Offset(0, 0.07),
-              child: ProjectCard(
-                project: project,
-                onExpanded: (expanded) async {
-                  if (expanded) {
-                    await _analytics.logEvent(
-                      name: 'project_expanded',
-                      parameters: {
-                        'project_id': project.id,
-                        'project_title': project.title,
-                      },
-                    );
-                  }
-                },
-                onApkDownload: () async {
+            child: ProjectCard(
+              project: project,
+              onExpanded: (expanded) async {
+                if (expanded) {
                   await _analytics.logEvent(
-                    name: 'apk_download_clicked',
+                    name: 'project_expanded',
                     parameters: {
                       'project_id': project.id,
                       'project_title': project.title,
                     },
                   );
-                },
-              ),
+                }
+              },
+              onApkDownload: () async {
+                await _analytics.logEvent(
+                  name: 'apk_download_clicked',
+                  parameters: {
+                    'project_id': project.id,
+                    'project_title': project.title,
+                  },
+                );
+              },
             ),
           );
         }).toList(),
       );
     }
 
-    if (state is ProjectLoading || state is ProjectInitial) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (state is ProjectLoaded && state.projects.isNotEmpty) {
-      return buildProjectCards(state.projects);
-    }
-
-    if (state is ProjectError) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0x66B00020),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0x99FF6B6B)),
+    return BlocBuilder<ProjectBloc, ProjectState>(
+      buildWhen: (previous, current) {
+        if (previous.runtimeType != current.runtimeType) {
+          return true;
+        }
+        if (previous is ProjectLoaded && current is ProjectLoaded) {
+          return previous.projects != current.projects;
+        }
+        if (previous is ProjectError && current is ProjectError) {
+          return previous.message != current.message;
+        }
+        return false;
+      },
+      builder: (context, state) {
+        if (state is ProjectLoading || state is ProjectInitial) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
             ),
-            child: Text(
-              'Could not fetch projects from Firestore: ${state.message}',
-              style: const TextStyle(color: Color(0xFFFFD7D7)),
-            ),
-          ),
-          buildProjectCards(_resumeProjects()),
-        ],
-      );
-    }
+          );
+        }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 12),
-          child: Text(
-            'No Firestore projects found yet. Showing local template projects.',
-            style: TextStyle(color: Colors.white70),
-          ),
-        ),
-        buildProjectCards(_resumeProjects()),
-      ],
+        if (state is ProjectLoaded && state.projects.isNotEmpty) {
+          return buildProjectCards(state.projects);
+        }
+
+        if (state is ProjectError) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0x66B00020),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0x99FF6B6B)),
+                ),
+                child: Text(
+                  'Could not fetch projects from Firestore: ${state.message}',
+                  style: const TextStyle(color: Color(0xFFFFD7D7)),
+                ),
+              ),
+              buildProjectCards(_resumeProjects()),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                'No Firestore projects found yet. Showing local template projects.',
+                style: TextStyle(color: Colors.white70),
+              ),
+            ),
+            buildProjectCards(_resumeProjects()),
+          ],
+        );
+      },
     );
   }
 
@@ -671,130 +682,126 @@ class _PortfolioPageState extends State<PortfolioPage> {
             colors: [Color(0xFF0A1020), Color(0xFF080A12)],
           ),
         ),
-        child: BlocBuilder<ProjectBloc, ProjectState>(
-          builder: (context, state) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _RevealOnBuild(
-                        delayMs: 30,
-                        child: _sectionContainer(
-                          key: _homeKey,
-                          title: 'Home',
-                          child: _heroSection(mobile),
-                        ),
-                      ),
-                      _RevealOnBuild(
-                        delayMs: 110,
-                        child: _sectionContainer(
-                          key: _projectsKey,
-                          title: 'Projects',
-                          child: _projectSection(state),
-                        ),
-                      ),
-                      _RevealOnBuild(
-                        delayMs: 180,
-                        child: _sectionContainer(
-                          key: _aboutKey,
-                          title: 'About',
-                          child: _aboutStory(),
-                        ),
-                      ),
-                      _RevealOnBuild(
-                        delayMs: 250,
-                        child: _sectionContainer(
-                          key: _skillsKey,
-                          title: 'Skills',
-                          child: _skillsGrid(),
-                        ),
-                      ),
-                      _RevealOnBuild(
-                        delayMs: 320,
-                        child: _sectionContainer(
-                          key: _contactKey,
-                          title: 'Contact',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _RevealOnBuild(
+                    delayMs: 30,
+                    child: _sectionContainer(
+                      key: _homeKey,
+                      title: 'Home',
+                      child: _heroSection(mobile),
+                    ),
+                  ),
+                  _RevealOnBuild(
+                    delayMs: 110,
+                    child: _sectionContainer(
+                      key: _projectsKey,
+                      title: 'Projects',
+                      child: _projectSection(),
+                    ),
+                  ),
+                  _RevealOnBuild(
+                    delayMs: 180,
+                    child: _sectionContainer(
+                      key: _aboutKey,
+                      title: 'About',
+                      child: _aboutStory(),
+                    ),
+                  ),
+                  _RevealOnBuild(
+                    delayMs: 250,
+                    child: _sectionContainer(
+                      key: _skillsKey,
+                      title: 'Skills',
+                      child: _skillsGrid(),
+                    ),
+                  ),
+                  _RevealOnBuild(
+                    delayMs: 320,
+                    child: _sectionContainer(
+                      key: _contactKey,
+                      title: 'Contact',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
+                            style: TextStyle(
+                              color: Color(0xFFD0DCFA),
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
                             children: [
-                              const Text(
-                                'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
-                                style: TextStyle(
-                                  color: Color(0xFFD0DCFA),
-                                  height: 1.5,
+                              Chip(
+                                avatar: const Icon(
+                                  Icons.email_outlined,
+                                  size: 16,
                                 ),
+                                label: Text(_email),
                               ),
-                              const SizedBox(height: 14),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  Chip(
-                                    avatar: const Icon(
-                                      Icons.email_outlined,
-                                      size: 16,
-                                    ),
-                                    label: Text(_email),
-                                  ),
-                                  Chip(
-                                    avatar: const Icon(
-                                      Icons.call_outlined,
-                                      size: 16,
-                                    ),
-                                    label: Text(_phone),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: _linkedInUrl.isEmpty
-                                        ? null
-                                        : () => _openExternalUrl(_linkedInUrl),
-                                    icon: const Icon(Icons.person),
-                                    label: const Text('LinkedIn'),
-                                  ),
-                                  OutlinedButton.icon(
-                                    onPressed: _githubUrl.isEmpty
-                                        ? null
-                                        : () => _openExternalUrl(_githubUrl),
-                                    icon: const Icon(Icons.code),
-                                    label: const Text('GitHub'),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 18),
-                              const _RevealOnBuild(
-                                delayMs: 120,
-                                beginOffset: Offset(0, 0.05),
-                                child: Divider(height: 1),
-                              ),
-                              const SizedBox(height: 16),
-                              _RevealOnBuild(
-                                delayMs: 170,
-                                beginOffset: const Offset(0, 0.05),
-                                child: ContactForm(
-                                  submitLeadUseCase: _submitLeadUseCase,
+                              Chip(
+                                avatar: const Icon(
+                                  Icons.call_outlined,
+                                  size: 16,
                                 ),
+                                label: Text(_phone),
                               ),
                             ],
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: _linkedInUrl.isEmpty
+                                    ? null
+                                    : () => _openExternalUrl(_linkedInUrl),
+                                icon: const Icon(Icons.person),
+                                label: const Text('LinkedIn'),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: _githubUrl.isEmpty
+                                    ? null
+                                    : () => _openExternalUrl(_githubUrl),
+                                icon: const Icon(Icons.code),
+                                label: const Text('GitHub'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          const _RevealOnBuild(
+                            delayMs: 120,
+                            beginOffset: Offset(0, 0.05),
+                            child: Divider(height: 1),
+                          ),
+                          const SizedBox(height: 16),
+                          _RevealOnBuild(
+                            delayMs: 170,
+                            beginOffset: const Offset(0, 0.05),
+                            child: ContactForm(
+                              submitLeadUseCase: _submitLeadUseCase,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 24),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 24),
+                ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
