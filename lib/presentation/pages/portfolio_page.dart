@@ -6,42 +6,67 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/di/service_locator.dart';
 import '../../domain/entities/apk_data.dart';
 import '../../domain/entities/project_entity.dart';
+import '../../domain/usecases/get_profile_use_case.dart';
 import '../../domain/usecases/submit_lead_use_case.dart';
 import '../bloc/project_bloc.dart';
 import '../bloc/project_state.dart';
 import '../widgets/contact_form.dart';
 import '../widgets/project_card.dart';
 
-class PortfolioPage extends StatefulWidget {
-  const PortfolioPage({super.key});
+class PortfolioPage extends StatelessWidget {
+  PortfolioPage({super.key});
+  static const List<Map<String, String>> _defaultAboutItems = [
+    {
+      'title': 'Education',
+      'body':
+          'Pursuing BE in Information Science at Sir M Visvesvaraya Institute of Technology (2023-2027) with 8.1 GPA, after scoring 86% at MES Kishore Kendra PU College.',
+    },
+    {
+      'title': 'Experience',
+      'body':
+          'Mobile App Developer Intern at WhiterApps (Jan 2026 - Present), architecting cross-platform Flutter apps with BLoC and integrating Firebase for real-time sync, cloud storage, and secure auth.',
+    },
+    {
+      'title': 'Leadership & Learning',
+      'body':
+          'Solved 190+ LeetCode problems, mentored 25+ students in Flutter during CSOC, and contributed to TechHub and GLUG workshops and ideathons.',
+    },
+  ];
+  static const List<String> _defaultSkills = [
+    'Flutter',
+    'BLoC',
+    'Firebase Firestore',
+    'Provider',
+    'Dart',
+    'C/C++',
+    'Python',
+    'SQL',
+    'Google Maps API',
+    'SQLite',
+    'MongoDB',
+    'Git/GitHub',
+  ];
 
-  @override
-  State<PortfolioPage> createState() => _PortfolioPageState();
-}
-
-class _PortfolioPageState extends State<PortfolioPage> {
   final _homeKey = GlobalKey();
   final _projectsKey = GlobalKey();
   final _aboutKey = GlobalKey();
   final _skillsKey = GlobalKey();
   final _contactKey = GlobalKey();
 
-  final _resumeUrl = 'https://drive.google.com/file/d/1eq772Rl_wuySqZ8ebj3BWSb_DAQO2ZHt/view?usp=drive_link';
-  final _githubUrl = 'https://github.com/supreethraj13';
-  final _linkedInUrl = 'https://www.linkedin.com/in/supreeth-raj-42157929a';
-  final _email = 'supreethrajs@gmail.com';
-  final _phone = '+91 7892496621';
-  final _location = 'Bengaluru';
+  final _defaultResumeUrl =
+      'https://drive.google.com/file/d/1eq772Rl_wuySqZ8ebj3BWSb_DAQO2ZHt/view?usp=drive_link';
+  final _defaultGithubUrl = 'https://github.com/supreethraj13';
+  final _defaultLinkedInUrl =
+      'https://www.linkedin.com/in/supreeth-raj-42157929a';
+  final _defaultEmail = 'supreethrajs@gmail.com';
+  final _defaultPhone = '+91 7892496621';
+  final _defaultLocation = 'Bengaluru';
 
-  late final SubmitLeadUseCase _submitLeadUseCase;
-  late final FirebaseAnalytics _analytics;
-
-  @override
-  void initState() {
-    super.initState();
-    _submitLeadUseCase = getIt<SubmitLeadUseCase>();
-    _analytics = getIt<FirebaseAnalytics>();
-  }
+  final GetProfileUseCase _getProfileUseCase = getIt<GetProfileUseCase>();
+  final SubmitLeadUseCase _submitLeadUseCase = getIt<SubmitLeadUseCase>();
+  final FirebaseAnalytics _analytics = getIt<FirebaseAnalytics>();
+  late final Future<Map<String, dynamic>?> _profileFuture = _getProfileUseCase
+      .call();
 
   Future<void> _scrollTo(GlobalKey key) async {
     final context = key.currentContext;
@@ -68,40 +93,47 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _sectionContainer({
+    required BuildContext context,
     required Key key,
     required String title,
     required Widget child,
   }) {
-    return Container(
+    final theme = Theme.of(context);
+    return RepaintBoundary(
       key: key,
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 30),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0x66161B26),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF242B3A)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Semantics(
-            header: true,
-            label: title,
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          color: const Color(0xCC141C2B),
+          border: Border.all(color: const Color(0xFF2A3650)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Semantics(
+              header: true,
+              label: title,
+              child: Text(
+                title,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          child,
-        ],
+            const SizedBox(height: 18),
+            child,
+          ],
+        ),
       ),
     );
   }
 
-  Widget _heroSection(bool mobile) {
-    final avatarSize = mobile ? 116.0 : 168.0;
+  Widget _heroSection(bool mobile, _ProfileContent profile) {
+    final avatarSize = mobile ? 120.0 : 176.0;
+    final titleSize = mobile ? 36.0 : 52.0;
     final avatar = ClipOval(
       child: Image.asset(
         'assets/images/supreeth_profile.jpg',
@@ -122,32 +154,69 @@ class _PortfolioPageState extends State<PortfolioPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          'L D Supreeth Raj',
+        Text(
+          profile.name,
           style: TextStyle(
-            fontSize: 44,
+            fontSize: titleSize,
             fontWeight: FontWeight.w700,
-            height: 1.1,
+            letterSpacing: -0.8,
+            height: 1.06,
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Flutter App Developer',
-          style: TextStyle(fontSize: 22, color: Colors.white70),
+        const SizedBox(height: 10),
+        Text(
+          profile.role,
+          style: TextStyle(
+            fontSize: 20,
+            color: Color(0xFFB8C8E8),
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        const SizedBox(height: 12),
-        const Text(
-          'I build scalable Flutter applications with BLoC and Firebase, focused on performance, reliability, and impactful user experiences.',
-          style: TextStyle(fontSize: 16, color: Colors.white70, height: 1.5),
+        const SizedBox(height: 14),
+        Text(
+          profile.summary,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Color(0xFFD0DCFA),
+            height: 1.6,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 10,
+          runSpacing: 10,
           children: [
-            Chip(label: Text(_location)),
-            Chip(label: Text(_email)),
-            Chip(label: Text(_phone)),
+            Chip(
+              avatar: const Icon(Icons.location_on_outlined, size: 16),
+              label: Text(profile.location),
+            ),
+            Chip(
+              avatar: const Icon(Icons.email_outlined, size: 16),
+              label: Text(profile.email),
+            ),
+            Chip(
+              avatar: const Icon(Icons.call_outlined, size: 16),
+              label: Text(profile.phone),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            FilledButton.icon(
+              onPressed: profile.resumeUrl.isEmpty
+                  ? null
+                  : () => _openExternalUrl(profile.resumeUrl),
+              icon: const Icon(Icons.description_outlined),
+              label: const Text('View Resume'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => _scrollTo(_contactKey),
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('Let\'s Connect'),
+            ),
           ],
         ),
       ],
@@ -164,115 +233,92 @@ class _PortfolioPageState extends State<PortfolioPage> {
       );
     }
 
-    return Row(
-      children: [
-        Expanded(child: text),
-        const SizedBox(width: 24),
-        avatar,
-      ],
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0x5598B4FF), Color(0x2222D3EE)],
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: const Color(0xFF0E1523),
+        ),
+        child: Row(
+          children: [
+            Expanded(child: text),
+            const SizedBox(width: 24),
+            avatar,
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _aboutStory() {
-    final items = <Map<String, String>>[
-      {
-        'title': 'Education',
-        'body':
-            'Pursuing BE in Information Science at Sir M Visvesvaraya Institute of Technology (2023-2027) with 8.1 GPA, after scoring 86% at MES Kishore Kendra PU College.',
-      },
-      {
-        'title': 'Experience',
-        'body':
-            'Mobile App Developer Intern at WhiterApps (Jan 2026 - Present), architecting cross-platform Flutter apps with BLoC and integrating Firebase for real-time sync, cloud storage, and secure auth.',
-      },
-      {
-        'title': 'Leadership & Learning',
-        'body':
-            'Solved 190+ LeetCode problems, mentored 25+ students in Flutter during CSOC, and contributed to TechHub and GLUG workshops and ideathons.',
-      },
-    ];
-
+  Widget _aboutStory(List<Map<String, String>> aboutItems) {
     return Column(
-      children: items.asMap().entries.map((entry) {
-        final index = entry.key;
-        final item = entry.value;
-        return TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: 1),
-          duration: Duration(milliseconds: 450 + (index * 120)),
-          builder: (context, value, child) => Opacity(
-            opacity: value,
-            child: Transform.translate(
-              offset: Offset(0, (1 - value) * 12),
-              child: child,
-            ),
+      children: aboutItems.map((item) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF30405E)),
+            color: const Color(0x99202B40),
           ),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF2A3142)),
-              color: const Color(0x4419212E),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  margin: const EdgeInsets.only(top: 8),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF4CC9F0),
-                    shape: BoxShape.circle,
-                  ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C9CFF).withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item['title']!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        item['body']!,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          height: 1.45,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Color(0xFFAAC0FF),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['title']!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 19,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item['body']!,
+                      style: const TextStyle(
+                        color: Color(0xFFD3DDF5),
+                        height: 1.55,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _skillsGrid() {
-    final skills = <String>[
-      'Flutter',
-      'BLoC',
-      'Firebase Firestore',
-      'Provider',
-      'Dart',
-      'C/C++',
-      'Python',
-      'SQL',
-      'Google Maps API',
-      'SQLite',
-      'MongoDB',
-      'Git/GitHub',
-    ];
-
+  Widget _skillsGrid(List<String> skills) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth > 900
@@ -280,126 +326,157 @@ class _PortfolioPageState extends State<PortfolioPage> {
             : constraints.maxWidth > 600
             ? 3
             : 2;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: skills.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: 3.6,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemBuilder: (context, index) {
-            final name = skills[index];
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+        const spacing = 8.0;
+        final tileWidth =
+            (constraints.maxWidth - ((crossAxisCount - 1) * spacing)) /
+            crossAxisCount;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: skills.map((name) {
+            return SizedBox(
+              width: tileWidth,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0x557C9CFF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          size: 16,
+                          color: Color(0xFFD8E4FF),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             );
-          },
+          }).toList(),
         );
       },
     );
   }
 
-  Widget _projectSection(ProjectState state) {
+  Widget _projectSection() {
     Widget buildProjectCards(List<ProjectEntity> projects) {
       return Column(
-        children: projects
-            .map(
-              (project) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: ProjectCard(
-                  project: project,
-                  onExpanded: (expanded) async {
-                    if (expanded) {
-                      await _analytics.logEvent(
-                        name: 'project_expanded',
-                        parameters: {
-                          'project_id': project.id,
-                          'project_title': project.title,
-                        },
-                      );
-                    }
+        children: projects.asMap().entries.map((entry) {
+          final project = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: ProjectCard(
+              project: project,
+              onExpanded: (expanded) async {
+                if (expanded) {
+                  await _analytics.logEvent(
+                    name: 'project_expanded',
+                    parameters: {
+                      'project_id': project.id,
+                      'project_title': project.title,
+                    },
+                  );
+                }
+              },
+              onApkDownload: () async {
+                await _analytics.logEvent(
+                  name: 'apk_download_clicked',
+                  parameters: {
+                    'project_id': project.id,
+                    'project_title': project.title,
                   },
-                  onApkDownload: () async {
-                    await _analytics.logEvent(
-                      name: 'apk_download_clicked',
-                      parameters: {
-                        'project_id': project.id,
-                        'project_title': project.title,
-                      },
-                    );
-                  },
+                );
+              },
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    return BlocBuilder<ProjectBloc, ProjectState>(
+      buildWhen: (previous, current) {
+        if (previous.runtimeType != current.runtimeType) {
+          return true;
+        }
+        if (previous is ProjectLoaded && current is ProjectLoaded) {
+          return previous.projects != current.projects;
+        }
+        if (previous is ProjectError && current is ProjectError) {
+          return previous.message != current.message;
+        }
+        return false;
+      },
+      builder: (context, state) {
+        if (state is ProjectLoading || state is ProjectInitial) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (state is ProjectLoaded && state.projects.isNotEmpty) {
+          return buildProjectCards(state.projects);
+        }
+
+        if (state is ProjectError) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0x66B00020),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0x99FF6B6B)),
+                ),
+                child: Text(
+                  'Could not fetch projects from Firestore: ${state.message}',
+                  style: const TextStyle(color: Color(0xFFFFD7D7)),
                 ),
               ),
-            )
-            .toList(),
-      );
-    }
+              buildProjectCards(_resumeProjects()),
+            ],
+          );
+        }
 
-    if (state is ProjectLoading || state is ProjectInitial) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (state is ProjectLoaded && state.projects.isNotEmpty) {
-      return buildProjectCards(state.projects);
-    }
-
-    if (state is ProjectError) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0x66B00020),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0x99FF6B6B)),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                'No Firestore projects found yet. Showing local template projects.',
+                style: TextStyle(color: Colors.white70),
+              ),
             ),
-            child: Text(
-              'Could not fetch projects from Firestore: ${state.message}',
-              style: const TextStyle(color: Color(0xFFFFD7D7)),
-            ),
-          ),
-          buildProjectCards(_resumeProjects()),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 12),
-          child: Text(
-            'No Firestore projects found yet. Showing local template projects.',
-            style: TextStyle(color: Colors.white70),
-          ),
-        ),
-        buildProjectCards(_resumeProjects()),
-      ],
+            buildProjectCards(_resumeProjects()),
+          ],
+        );
+      },
     );
   }
 
@@ -454,19 +531,42 @@ class _PortfolioPageState extends State<PortfolioPage> {
     ];
   }
 
-  PreferredSizeWidget _buildAppBar(bool mobile) {
+  PreferredSizeWidget _buildAppBar(bool mobile, String resumeUrl) {
     final items = _navItems();
     if (mobile) {
-      return AppBar(title: const Text('Supreeth Raj'));
+      return AppBar(
+        title: const Text('Supreeth Raj'),
+        actions: [
+          IconButton(
+            onPressed: resumeUrl.isEmpty
+                ? null
+                : () => _openExternalUrl(resumeUrl),
+            tooltip: 'Resume',
+            icon: const Icon(Icons.description_outlined),
+          ),
+        ],
+      );
     }
     return AppBar(
       title: const Text('Supreeth Raj'),
-      actions: items
-          .map(
-            (item) =>
-                TextButton(onPressed: item.onTap, child: Text(item.label)),
-          )
-          .toList(),
+      actions: [
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: TextButton(onPressed: item.onTap, child: Text(item.label)),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: FilledButton.icon(
+            onPressed: resumeUrl.isEmpty
+                ? null
+                : () => _openExternalUrl(resumeUrl),
+            icon: const Icon(Icons.description_outlined),
+            label: const Text('Resume'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -477,7 +577,6 @@ class _PortfolioPageState extends State<PortfolioPage> {
       _NavItem('About', () => _scrollTo(_aboutKey)),
       _NavItem('Skills', () => _scrollTo(_skillsKey)),
       _NavItem('Contact', () => _scrollTo(_contactKey)),
-      _NavItem('Resume', () => _openExternalUrl(_resumeUrl)),
     ];
   }
 
@@ -486,112 +585,182 @@ class _PortfolioPageState extends State<PortfolioPage> {
     final width = MediaQuery.sizeOf(context).width;
     final mobile = width < 900;
     final items = _navItems();
+    final fallbackProfile = _ProfileContent(
+      name: 'L D Supreeth Raj',
+      role: 'Flutter App Developer',
+      summary:
+          'I build scalable Flutter applications with BLoC and Firebase, focused on performance, reliability, and impactful user experiences.',
+      location: _defaultLocation,
+      email: _defaultEmail,
+      phone: _defaultPhone,
+      resumeUrl: _defaultResumeUrl,
+      githubUrl: _defaultGithubUrl,
+      linkedInUrl: _defaultLinkedInUrl,
+      contactIntro:
+          'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
+      skills: _defaultSkills,
+      aboutItems: _defaultAboutItems,
+    );
 
-    return Scaffold(
-      appBar: _buildAppBar(mobile),
-      drawer: mobile
-          ? Drawer(
-              child: ListView(
-                children: [
-                  const DrawerHeader(
-                    child: Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Text(
-                        'Navigate',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _profileFuture,
+      builder: (context, snapshot) {
+        final profile = _ProfileContent.fromMap(snapshot.data, fallbackProfile);
+
+        return Scaffold(
+          appBar: _buildAppBar(mobile, profile.resumeUrl),
+          drawer: mobile
+              ? Drawer(
+                  child: ListView(
+                    children: [
+                      const DrawerHeader(
+                        child: Align(
+                          alignment: Alignment.bottomLeft,
+                          child: Text(
+                            'Navigate',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  ...items.map(
-                    (item) => ListTile(
-                      title: Text(item.label),
-                      onTap: () async {
-                        Navigator.of(context).pop();
-                        await item.onTap();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : null,
-      body: BlocBuilder<ProjectBloc, ProjectState>(
-        builder: (context, state) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _sectionContainer(
-                      key: _homeKey,
-                      title: 'Home',
-                      child: _heroSection(mobile),
-                    ),
-                    _sectionContainer(
-                      key: _projectsKey,
-                      title: 'Projects',
-                      child: _projectSection(state),
-                    ),
-                    _sectionContainer(
-                      key: _aboutKey,
-                      title: 'About',
-                      child: _aboutStory(),
-                    ),
-                    _sectionContainer(
-                      key: _skillsKey,
-                      title: 'Skills',
-                      child: _skillsGrid(),
-                    ),
-                    _sectionContainer(
-                      key: _contactKey,
-                      title: 'Contact',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Reach me at $_email or $_phone. Open to internship and collaboration opportunities.',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: _linkedInUrl.isEmpty
-                                    ? null
-                                    : () => _openExternalUrl(_linkedInUrl),
-                                icon: const Icon(Icons.person),
-                                label: const Text('LinkedIn'),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: _githubUrl.isEmpty
-                                    ? null
-                                    : () => _openExternalUrl(_githubUrl),
-                                icon: const Icon(Icons.code),
-                                label: const Text('GitHub'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          ContactForm(submitLeadUseCase: _submitLeadUseCase),
-                        ],
+                      ...items.map(
+                        (item) => ListTile(
+                          title: Text(item.label),
+                          onTap: () async {
+                            Navigator.of(context).pop();
+                            await item.onTap();
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                      ListTile(
+                        title: const Text('Resume'),
+                        leading: const Icon(Icons.description_outlined),
+                        onTap: () async {
+                          Navigator.of(context).pop();
+                          await _openExternalUrl(profile.resumeUrl);
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              : null,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF0A1020), Color(0xFF080A12)],
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionContainer(
+                        context: context,
+                        key: _homeKey,
+                        title: 'Home',
+                        child: _heroSection(mobile, profile),
+                      ),
+                      _sectionContainer(
+                        context: context,
+                        key: _projectsKey,
+                        title: 'Projects',
+                        child: _projectSection(),
+                      ),
+                      _sectionContainer(
+                        context: context,
+                        key: _aboutKey,
+                        title: 'About',
+                        child: _aboutStory(profile.aboutItems),
+                      ),
+                      _sectionContainer(
+                        context: context,
+                        key: _skillsKey,
+                        title: 'Skills',
+                        child: _skillsGrid(profile.skills),
+                      ),
+                      _sectionContainer(
+                        context: context,
+                        key: _contactKey,
+                        title: 'Contact',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              profile.contactIntro,
+                              style: const TextStyle(
+                                color: Color(0xFFD0DCFA),
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                Chip(
+                                  avatar: const Icon(
+                                    Icons.email_outlined,
+                                    size: 16,
+                                  ),
+                                  label: Text(profile.email),
+                                ),
+                                Chip(
+                                  avatar: const Icon(
+                                    Icons.call_outlined,
+                                    size: 16,
+                                  ),
+                                  label: Text(profile.phone),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: profile.linkedInUrl.isEmpty
+                                      ? null
+                                      : () => _openExternalUrl(
+                                          profile.linkedInUrl,
+                                        ),
+                                  icon: const Icon(Icons.person),
+                                  label: const Text('LinkedIn'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: profile.githubUrl.isEmpty
+                                      ? null
+                                      : () =>
+                                            _openExternalUrl(profile.githubUrl),
+                                  icon: const Icon(Icons.code),
+                                  label: const Text('GitHub'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            const Divider(height: 1),
+                            const SizedBox(height: 16),
+                            ContactForm(submitLeadUseCase: _submitLeadUseCase),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -601,4 +770,93 @@ class _NavItem {
 
   final String label;
   final Future<void> Function() onTap;
+}
+
+class _ProfileContent {
+  const _ProfileContent({
+    required this.name,
+    required this.role,
+    required this.summary,
+    required this.location,
+    required this.email,
+    required this.phone,
+    required this.resumeUrl,
+    required this.githubUrl,
+    required this.linkedInUrl,
+    required this.contactIntro,
+    required this.skills,
+    required this.aboutItems,
+  });
+
+  final String name;
+  final String role;
+  final String summary;
+  final String location;
+  final String email;
+  final String phone;
+  final String resumeUrl;
+  final String githubUrl;
+  final String linkedInUrl;
+  final String contactIntro;
+  final List<String> skills;
+  final List<Map<String, String>> aboutItems;
+
+  factory _ProfileContent.fromMap(
+    Map<String, dynamic>? raw,
+    _ProfileContent fallback,
+  ) {
+    final source = raw ?? const <String, dynamic>{};
+    return _ProfileContent(
+      name: _string(source['name'], fallback.name),
+      role: _string(source['role'], fallback.role),
+      summary: _string(source['summary'], fallback.summary),
+      location: _string(source['location'], fallback.location),
+      email: _string(source['email'], fallback.email),
+      phone: _string(source['phone'], fallback.phone),
+      resumeUrl: _string(source['resumeUrl'], fallback.resumeUrl),
+      githubUrl: _string(source['githubUrl'], fallback.githubUrl),
+      linkedInUrl: _string(source['linkedInUrl'], fallback.linkedInUrl),
+      contactIntro: _string(source['contactIntro'], fallback.contactIntro),
+      skills: _stringList(source['skills'], fallback.skills),
+      aboutItems: _aboutList(source['aboutItems'], fallback.aboutItems),
+    );
+  }
+
+  static String _string(Object? value, String fallback) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? fallback : text;
+  }
+
+  static List<String> _stringList(Object? value, List<String> fallback) {
+    if (value is! List) {
+      return fallback;
+    }
+    final mapped = value
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+    return mapped.isEmpty ? fallback : mapped;
+  }
+
+  static List<Map<String, String>> _aboutList(
+    Object? value,
+    List<Map<String, String>> fallback,
+  ) {
+    if (value is! List) {
+      return fallback;
+    }
+    final mapped = <Map<String, String>>[];
+    for (final item in value) {
+      if (item is! Map) {
+        continue;
+      }
+      final title = item['title']?.toString().trim() ?? '';
+      final body = item['body']?.toString().trim() ?? '';
+      if (title.isEmpty || body.isEmpty) {
+        continue;
+      }
+      mapped.add({'title': title, 'body': body});
+    }
+    return mapped.isEmpty ? fallback : mapped;
+  }
 }

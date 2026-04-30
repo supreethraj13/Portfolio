@@ -30,6 +30,7 @@ class ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final apk = project.apkData;
     final imageUrls = project.imageUrls
         .map((url) => url.trim())
@@ -41,26 +42,53 @@ class ProjectCard extends StatelessWidget {
     return Semantics(
       label: 'Project ${project.title}',
       child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFF30405E)),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
           child: ExpansionTile(
             tilePadding: EdgeInsets.zero,
             childrenPadding: EdgeInsets.zero,
+            shape: Border.all(color: Colors.transparent),
+            collapsedShape: Border.all(color: Colors.transparent),
+            iconColor: const Color(0xFFAAC0FF),
+            collapsedIconColor: const Color(0xFFAAC0FF),
             title: Text(
               project.title,
-              style: Theme.of(context).textTheme.titleLarge,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            subtitle: Text(project.subtitle),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                project.subtitle,
+                style: const TextStyle(color: Color(0xFFB8C8E8)),
+              ),
+            ),
             onExpansionChanged: onExpanded,
             children: [
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: project.techStack
+                    .take(4)
+                    .map((item) => Chip(label: Text(item)))
+                    .toList(),
+              ),
               if (videoUrl.isNotEmpty)
-                LazyVideoPlayer(
-                  videoUrl: videoUrl,
-                  thumbnailUrl: thumbnail,
+                Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: LazyVideoPlayer(
+                    videoUrl: videoUrl,
+                    thumbnailUrl: thumbnail,
+                  ),
                 ),
               if (imageUrls.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 SizedBox(
                   height: 110,
                   child: ListView.separated(
@@ -84,34 +112,33 @@ class ProjectCard extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
-              Text(project.description),
-              const SizedBox(height: 8),
-              Text('Challenge: ${project.challenge}'),
-              const SizedBox(height: 4),
-              Text('Solution: ${project.solution}'),
-              const SizedBox(height: 4),
-              Text('Impact & Learning: ${project.impact}'),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: project.techStack
-                    .map((item) => Chip(label: Text(item)))
-                    .toList(),
+              const SizedBox(height: 14),
+              Text(
+                project.description,
+                style: const TextStyle(color: Color(0xFFD0DCFA), height: 1.5),
               ),
+              const SizedBox(height: 14),
+              _DetailBlock(title: 'Challenge', content: project.challenge),
+              const SizedBox(height: 8),
+              _DetailBlock(title: 'Solution', content: project.solution),
+              const SizedBox(height: 8),
+              _DetailBlock(title: 'Impact', content: project.impact),
               const SizedBox(height: 14),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: () => _openLink(project.githubUrl),
+                    onPressed: project.githubUrl.trim().isEmpty
+                        ? null
+                        : () => _openLink(project.githubUrl),
                     icon: const Icon(Icons.code),
                     label: const Text('GitHub'),
                   ),
                   OutlinedButton.icon(
-                    onPressed: () => _openLink(project.demoUrl),
+                    onPressed: project.demoUrl.trim().isEmpty
+                        ? null
+                        : () => _openLink(project.demoUrl),
                     icon: const Icon(Icons.public),
                     label: const Text('Live Demo'),
                   ),
@@ -132,6 +159,45 @@ class ProjectCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailBlock extends StatelessWidget {
+  const _DetailBlock({required this.title, required this.content});
+
+  final String title;
+  final String content;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: const Color(0x661A2740),
+        border: Border.all(color: const Color(0xFF30405E)),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(
+            color: Color(0xFFD4E0FA),
+            fontSize: 14,
+            height: 1.45,
+          ),
+          children: [
+            TextSpan(
+              text: '$title: ',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            TextSpan(text: content),
+          ],
         ),
       ),
     );
