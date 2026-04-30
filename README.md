@@ -31,6 +31,15 @@ High-performance, storytelling-first developer portfolio template built with Flu
 
 - `name`, `email`, `message`, `createdAt`
 
+`portfolio/profile`:
+
+- `name`, `role`, `summary`
+- `location`, `email`, `phone`
+- `resumeUrl`, `githubUrl`, `linkedInUrl`
+- `contactIntro`
+- `skills: List<String>`
+- `aboutItems: List<{ title: String, body: String }>`
+
 ## Setup
 
 1. Install dependencies:
@@ -61,6 +70,7 @@ High-performance, storytelling-first developer portfolio template built with Flu
    - Create database in **production mode**.
    - Region: choose the closest location to your users.
    - Create collection `projects` and add docs using schema above.
+   - Create document `portfolio/profile` for hero/about/skills/contact content.
 2. Storage:
    - Enable Firebase Storage.
    - Upload project media under `projects/...` and APK files under `downloads/...`.
@@ -72,4 +82,6 @@ High-performance, storytelling-first developer portfolio template built with Flu
    - Rules files are included in repo:
      - `firestore.rules`
      - `storage.rules`
+   - If you see `permission-denied` in contact form, redeploy Firestore rules:
+     - `firebase deploy --only firestore:rules`
 # Portfolio

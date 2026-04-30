@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/lead_message.dart';
@@ -53,6 +54,16 @@ class _ContactFormState extends State<ContactForm> {
       _nameController.clear();
       _emailController.clear();
       _messageController.clear();
+    } on FirebaseException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final message = error.code == 'permission-denied'
+          ? 'Submission blocked by Firestore rules. Use a name with 2-80 chars and a message with 5-2000 chars, then try again.'
+          : 'Failed to send message: ${error.message ?? error.code}';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) {
         return;
@@ -88,13 +99,21 @@ class _ContactFormState extends State<ContactForm> {
           const SizedBox(height: 14),
           TextFormField(
             controller: _nameController,
+            maxLength: 80,
             decoration: const InputDecoration(
               labelText: 'Name',
               prefixIcon: Icon(Icons.person_outline),
             ),
-            validator: (value) => (value == null || value.trim().isEmpty)
-                ? 'Please enter your name'
-                : null,
+            validator: (value) {
+              final text = value?.trim() ?? '';
+              if (text.isEmpty) {
+                return 'Please enter your name';
+              }
+              if (text.length < 2) {
+                return 'Name must be at least 2 characters';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 12),
           TextFormField(
@@ -116,6 +135,7 @@ class _ContactFormState extends State<ContactForm> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _messageController,
+            maxLength: 2000,
             maxLines: 4,
             decoration: const InputDecoration(
               labelText: 'Message',
@@ -125,9 +145,16 @@ class _ContactFormState extends State<ContactForm> {
                 child: Icon(Icons.chat_bubble_outline),
               ),
             ),
-            validator: (value) => (value == null || value.trim().isEmpty)
-                ? 'Please enter a message'
-                : null,
+            validator: (value) {
+              final text = value?.trim() ?? '';
+              if (text.isEmpty) {
+                return 'Please enter a message';
+              }
+              if (text.length < 5) {
+                return 'Message must be at least 5 characters';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 14),
           FilledButton.icon(

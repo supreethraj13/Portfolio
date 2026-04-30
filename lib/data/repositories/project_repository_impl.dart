@@ -18,6 +18,11 @@ class ProjectRepositoryImpl implements ProjectRepository {
   }
 
   @override
+  Future<Map<String, dynamic>?> getProfile() {
+    return _remoteDataSource.fetchProfile();
+  }
+
+  @override
   Future<void> submitLead(LeadMessage lead) {
     return _remoteDataSource.submitLead({
       'name': lead.name,

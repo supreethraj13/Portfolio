@@ -7,6 +7,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Public single-document profile content for non-project sections.
+    match /portfolio/{documentId} {
+      allow read: if documentId == 'profile';
+      allow write: if false;
+    }
+
     // Contact form submissions: create-only from client, no public reads.
     match /leads/{leadId} {
       allow create: if
