@@ -1,6 +1,91 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isValidLeadEmail(email) {
+      return email is string &&
+          email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    }
+
+    function isValidLeadPayload() {
+      return request.resource.data.keys().hasOnly([
+            'name',
+            'email',
+            'message',
+            'createdAt',
+            'rateLimitKey',
+          ]) &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() >= 2 &&
+          request.resource.data.name.size() <= 80 &&
+          isValidLeadEmail(request.resource.data.email) &&
+          request.resource.data.message is string &&
+          request.resource.data.message.size() >= 5 &&
+          request.resource.data.message.size() <= 2000 &&
+          request.resource.data.rateLimitKey is string &&
+          request.resource.data.rateLimitKey.size() > 0 &&
+          request.resource.data.createdAt is timestamp &&
+          request.resource.data.createdAt == request.time;
+    }
+
+    function isValidRateLimitCreate() {
+      return request.resource.data.keys().hasOnly([
+            'email',
+            'windowCount',
+            'bucket',
+            'bucketStartedAt',
+            'bucketExpiresAt',
+            'lastSentAt',
+            'updatedAt',
+          ]) &&
+          isValidLeadEmail(request.resource.data.email) &&
+          request.resource.data.windowCount is int &&
+          request.resource.data.windowCount == 1 &&
+          request.resource.data.bucket is string &&
+          request.resource.data.bucket.size() == 10 &&
+          request.resource.data.bucketStartedAt is timestamp &&
+          request.resource.data.bucketExpiresAt is timestamp &&
+          request.resource.data.bucketStartedAt < request.resource.data.bucketExpiresAt &&
+          request.time >= request.resource.data.bucketStartedAt &&
+          request.time < request.resource.data.bucketExpiresAt &&
+          request.resource.data.lastSentAt is timestamp &&
+          request.resource.data.lastSentAt == request.time &&
+          request.resource.data.updatedAt is timestamp &&
+          request.resource.data.updatedAt == request.time;
+    }
+
+    function isValidRateLimitUpdate() {
+      return request.resource.data.keys().hasOnly([
+            'email',
+            'windowCount',
+            'bucket',
+            'bucketStartedAt',
+            'bucketExpiresAt',
+            'lastSentAt',
+            'updatedAt',
+          ]) &&
+          resource.data.email is string &&
+          isValidLeadEmail(resource.data.email) &&
+          resource.data.windowCount is int &&
+          resource.data.bucket is string &&
+          resource.data.bucketStartedAt is timestamp &&
+          resource.data.bucketExpiresAt is timestamp &&
+          resource.data.lastSentAt is timestamp &&
+          request.resource.data.email == resource.data.email &&
+          request.resource.data.bucket == resource.data.bucket &&
+          request.resource.data.bucketStartedAt == resource.data.bucketStartedAt &&
+          request.resource.data.bucketExpiresAt == resource.data.bucketExpiresAt &&
+          request.time >= resource.data.bucketStartedAt &&
+          request.time < resource.data.bucketExpiresAt &&
+          request.resource.data.lastSentAt is timestamp &&
+          request.resource.data.lastSentAt == request.time &&
+          request.resource.data.updatedAt is timestamp &&
+          request.resource.data.updatedAt == request.time &&
+          request.resource.data.windowCount is int &&
+          request.resource.data.windowCount == resource.data.windowCount + 1 &&
+          request.resource.data.windowCount <= 3 &&
+          request.time >= resource.data.lastSentAt + duration.value(30, 's');
+    }
+
     // Public portfolio projects can be read by visitors.
     match /projects/{projectId} {
       allow read: if true;
@@ -13,18 +98,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Per-email rate-limit state for lead submissions.
+    match /lead_rate_limits/{rateLimitKey} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if isValidRateLimitCreate();
+      allow update: if isValidRateLimitUpdate();
+      allow delete: if false;
+    }
+
     // Contact form submissions: create-only from client, no public reads.
     match /leads/{leadId} {
       allow create: if
-          request.resource.data.keys().hasOnly(['name', 'email', 'message', 'createdAt']) &&
-          request.resource.data.name is string &&
-          request.resource.data.name.size() >= 2 &&
-          request.resource.data.name.size() <= 80 &&
-          request.resource.data.email is string &&
-          request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$') &&
-          request.resource.data.message is string &&
-          request.resource.data.message.size() >= 5 &&
-          request.resource.data.message.size() <= 2000;
+          isValidLeadPayload() &&
+          existsAfter(/databases/$(database)/documents/lead_rate_limits/$(request.resource.data.rateLimitKey)) &&
+          getAfter(/databases/$(database)/documents/lead_rate_limits/$(request.resource.data.rateLimitKey)).data.email == request.resource.data.email &&
+          getAfter(/databases/$(database)/documents/lead_rate_limits/$(request.resource.data.rateLimitKey)).data.lastSentAt == request.time &&
+          getAfter(/databases/$(database)/documents/lead_rate_limits/$(request.resource.data.rateLimitKey)).data.updatedAt == request.time;
       allow read, update, delete: if false;
     }
 
