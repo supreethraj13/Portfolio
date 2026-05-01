@@ -29,7 +29,11 @@ High-performance, storytelling-first developer portfolio template built with Flu
 
 `leads/{autoId}`:
 
-- `name`, `email`, `message`, `createdAt`
+- `name`, `email`, `message`, `createdAt`, `rateLimitKey`
+
+`lead_rate_limits/{rateLimitKey}`:
+
+- `email`, `windowCount`, `bucket`, `bucketStartedAt`, `bucketExpiresAt`, `lastSentAt`, `updatedAt`
 
 `portfolio/profile`:
 

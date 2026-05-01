@@ -17,15 +17,45 @@ class ProjectCard extends StatelessWidget {
   final ValueChanged<bool> onExpanded;
   final VoidCallback onApkDownload;
 
-  Future<void> _openLink(String value) async {
-    if (value.isEmpty) {
+  void _showLaunchError(BuildContext context, String message) {
+    if (!context.mounted) {
       return;
     }
-    final uri = Uri.tryParse(value);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) {
+      return;
+    }
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openLink(BuildContext context, String value) async {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      _showLaunchError(context, 'Link is not available.');
+      return;
+    }
+    final uri = Uri.tryParse(trimmed);
     if (uri == null) {
+      _showLaunchError(context, 'Link format is invalid.');
       return;
     }
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!context.mounted) {
+        return;
+      }
+      if (!launched) {
+        _showLaunchError(context, 'Unable to open the link.');
+      }
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      _showLaunchError(context, 'Failed to open link: $error');
+    }
   }
 
   @override
@@ -131,14 +161,14 @@ class ProjectCard extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: project.githubUrl.trim().isEmpty
                         ? null
-                        : () => _openLink(project.githubUrl),
+                        : () => _openLink(context, project.githubUrl),
                     icon: const Icon(Icons.code),
                     label: const Text('GitHub'),
                   ),
                   OutlinedButton.icon(
                     onPressed: project.demoUrl.trim().isEmpty
                         ? null
-                        : () => _openLink(project.demoUrl),
+                        : () => _openLink(context, project.demoUrl),
                     icon: const Icon(Icons.public),
                     label: const Text('Live Demo'),
                   ),
@@ -149,7 +179,7 @@ class ProjectCard extends StatelessWidget {
                       child: FilledButton.icon(
                         onPressed: () async {
                           onApkDownload();
-                          await _openLink(apk.url);
+                          await _openLink(context, apk.url);
                         },
                         icon: const Icon(Icons.download),
                         label: const Text('Download APK'),

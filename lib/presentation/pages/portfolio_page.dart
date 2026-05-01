@@ -81,15 +81,45 @@ class PortfolioPage extends StatelessWidget {
     );
   }
 
-  Future<void> _openExternalUrl(String value) async {
-    if (value.trim().isEmpty) {
+  void _showLaunchError(BuildContext context, String message) {
+    if (!context.mounted) {
       return;
     }
-    final uri = Uri.tryParse(value);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) {
+      return;
+    }
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openExternalUrl(BuildContext context, String value) async {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      _showLaunchError(context, 'Link is not available.');
+      return;
+    }
+    final uri = Uri.tryParse(trimmed);
     if (uri == null) {
+      _showLaunchError(context, 'Link format is invalid.');
       return;
     }
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!context.mounted) {
+        return;
+      }
+      if (!launched) {
+        _showLaunchError(context, 'Unable to open the link.');
+      }
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      _showLaunchError(context, 'Failed to open link: $error');
+    }
   }
 
   Widget _sectionContainer({
@@ -131,7 +161,7 @@ class PortfolioPage extends StatelessWidget {
     );
   }
 
-  Widget _heroSection(bool mobile, _ProfileContent profile) {
+  Widget _heroSection(BuildContext context, bool mobile, _ProfileContent profile) {
     final avatarSize = mobile ? 120.0 : 176.0;
     final titleSize = mobile ? 36.0 : 52.0;
     final avatar = ClipOval(
@@ -208,7 +238,7 @@ class PortfolioPage extends StatelessWidget {
             FilledButton.icon(
               onPressed: profile.resumeUrl.isEmpty
                   ? null
-                  : () => _openExternalUrl(profile.resumeUrl),
+                  : () => _openExternalUrl(context, profile.resumeUrl),
               icon: const Icon(Icons.description_outlined),
               label: const Text('View Resume'),
             ),
@@ -531,7 +561,11 @@ class PortfolioPage extends StatelessWidget {
     ];
   }
 
-  PreferredSizeWidget _buildAppBar(bool mobile, String resumeUrl) {
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    bool mobile,
+    String resumeUrl,
+  ) {
     final items = _navItems();
     if (mobile) {
       return AppBar(
@@ -540,7 +574,7 @@ class PortfolioPage extends StatelessWidget {
           IconButton(
             onPressed: resumeUrl.isEmpty
                 ? null
-                : () => _openExternalUrl(resumeUrl),
+                : () => _openExternalUrl(context, resumeUrl),
             tooltip: 'Resume',
             icon: const Icon(Icons.description_outlined),
           ),
@@ -561,7 +595,7 @@ class PortfolioPage extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: resumeUrl.isEmpty
                 ? null
-                : () => _openExternalUrl(resumeUrl),
+                : () => _openExternalUrl(context, resumeUrl),
             icon: const Icon(Icons.description_outlined),
             label: const Text('Resume'),
           ),
@@ -608,7 +642,7 @@ class PortfolioPage extends StatelessWidget {
         final profile = _ProfileContent.fromMap(snapshot.data, fallbackProfile);
 
         return Scaffold(
-          appBar: _buildAppBar(mobile, profile.resumeUrl),
+          appBar: _buildAppBar(context, mobile, profile.resumeUrl),
           drawer: mobile
               ? Drawer(
                   child: ListView(
@@ -639,7 +673,7 @@ class PortfolioPage extends StatelessWidget {
                         leading: const Icon(Icons.description_outlined),
                         onTap: () async {
                           Navigator.of(context).pop();
-                          await _openExternalUrl(profile.resumeUrl);
+                          await _openExternalUrl(context, profile.resumeUrl);
                         },
                       ),
                     ],
@@ -666,7 +700,7 @@ class PortfolioPage extends StatelessWidget {
                         context: context,
                         key: _homeKey,
                         title: 'Home',
-                        child: _heroSection(mobile, profile),
+                        child: _heroSection(context, mobile, profile),
                       ),
                       _sectionContainer(
                         context: context,
@@ -730,6 +764,7 @@ class PortfolioPage extends StatelessWidget {
                                   onPressed: profile.linkedInUrl.isEmpty
                                       ? null
                                       : () => _openExternalUrl(
+                                          context,
                                           profile.linkedInUrl,
                                         ),
                                   icon: const Icon(Icons.person),
@@ -738,8 +773,10 @@ class PortfolioPage extends StatelessWidget {
                                 OutlinedButton.icon(
                                   onPressed: profile.githubUrl.isEmpty
                                       ? null
-                                      : () =>
-                                            _openExternalUrl(profile.githubUrl),
+                                      : () => _openExternalUrl(
+                                          context,
+                                          profile.githubUrl,
+                                        ),
                                   icon: const Icon(Icons.code),
                                   label: const Text('GitHub'),
                                 ),

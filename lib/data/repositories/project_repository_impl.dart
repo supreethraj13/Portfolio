@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../domain/entities/lead_message.dart';
 import '../../domain/entities/project_entity.dart';
 import '../../domain/repositories/project_repository.dart';
@@ -25,10 +23,9 @@ class ProjectRepositoryImpl implements ProjectRepository {
   @override
   Future<void> submitLead(LeadMessage lead) {
     return _remoteDataSource.submitLead({
-      'name': lead.name,
-      'email': lead.email,
-      'message': lead.message,
-      'createdAt': FieldValue.serverTimestamp(),
+      'name': lead.name.trim(),
+      'email': lead.email.trim(),
+      'message': lead.message.trim(),
     });
   }
 }

@@ -58,8 +58,10 @@ class _ContactFormState extends State<ContactForm> {
       if (!mounted) {
         return;
       }
-      final message = error.code == 'permission-denied'
-          ? 'Submission blocked by Firestore rules. Use a name with 2-80 chars and a message with 5-2000 chars, then try again.'
+      final message = error.code == 'rate-limit-exceeded'
+          ? 'Rate limit reached. Please wait before sending another message.'
+          : error.code == 'permission-denied'
+          ? 'Submission blocked by Firestore rules or rate limits. Wait and try again.'
           : 'Failed to send message: ${error.message ?? error.code}';
       ScaffoldMessenger.of(
         context,
