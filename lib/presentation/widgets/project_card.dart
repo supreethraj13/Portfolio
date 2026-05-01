@@ -119,28 +119,7 @@ class ProjectCard extends StatelessWidget {
                 ),
               if (imageUrls.isNotEmpty) ...[
                 const SizedBox(height: 14),
-                SizedBox(
-                  height: 110,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: imageUrls.length,
-                    separatorBuilder: (_, index) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrls[index],
-                          width: 180,
-                          fit: BoxFit.cover,
-                          placeholder: (_, placeholderUrl) =>
-                              const ColoredBox(color: Color(0xFF11131A)),
-                          errorWidget: (_, failedUrl, error) =>
-                              const ColoredBox(color: Color(0xFF11131A)),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                _ProjectImageStrip(imageUrls: imageUrls),
               ],
               const SizedBox(height: 14),
               Text(
@@ -191,6 +170,55 @@ class ProjectCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProjectImageStrip extends StatelessWidget {
+  const _ProjectImageStrip({required this.imageUrls});
+
+  final List<String> imageUrls;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 520;
+        final double tileHeight = compact ? 280.0 : 340.0;
+        final double tileWidth = compact
+            ? (constraints.maxWidth * 0.72).clamp(170.0, 210.0).toDouble()
+            : 220.0;
+
+        return SizedBox(
+          height: tileHeight,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: imageUrls.length,
+            separatorBuilder: (_, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: tileWidth,
+                  color: const Color(0xFF11131A),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrls[index],
+                    fit: BoxFit.contain,
+                    placeholder: (_, placeholderUrl) =>
+                        const ColoredBox(color: Color(0xFF11131A)),
+                    errorWidget: (_, failedUrl, error) => const Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white54,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
