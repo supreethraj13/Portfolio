@@ -160,6 +160,7 @@ class _LazyVideoPlayerState extends State<LazyVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return MouseRegion(
       onEnter: (_) async {
         _isHovering = true;
@@ -207,20 +208,26 @@ class _LazyVideoPlayerState extends State<LazyVideoPlayer> {
                       CachedNetworkImage(
                         imageUrl: widget.thumbnailUrl,
                         fit: BoxFit.cover,
-                        placeholder: (_, placeholderUrl) =>
-                            const ColoredBox(color: Color(0xFF11131A)),
-                        errorWidget: (_, failedUrl, error) =>
-                            const ColoredBox(color: Color(0xFF11131A)),
+                        placeholder: (_, placeholderUrl) => ColoredBox(
+                          color: isDark
+                              ? const Color(0xFF11131A)
+                              : const Color(0xFFE4EBFB),
+                        ),
+                        errorWidget: (_, failedUrl, error) => ColoredBox(
+                          color: isDark
+                              ? const Color(0xFF11131A)
+                              : const Color(0xFFE4EBFB),
+                        ),
                       ),
-                      const Center(
+                      Center(
                         child: Icon(
                           Icons.play_circle_outline,
                           size: 64,
-                          color: Colors.white70,
+                          color: isDark ? Colors.white70 : Colors.black45,
                         ),
                       ),
                       if (_videoUnavailable)
-                        const Positioned(
+                        Positioned(
                           left: 10,
                           right: 10,
                           bottom: 10,
@@ -228,7 +235,7 @@ class _LazyVideoPlayerState extends State<LazyVideoPlayer> {
                             'Preview unavailable for this video source',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white70,
+                              color: isDark ? Colors.white70 : Colors.black54,
                               fontSize: 12,
                             ),
                           ),

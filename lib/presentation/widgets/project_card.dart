@@ -61,6 +61,7 @@ class ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final apk = project.apkData;
     final imageUrls = project.imageUrls
         .map((url) => url.trim())
@@ -74,7 +75,9 @@ class ProjectCard extends StatelessWidget {
       child: Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF30405E)),
+          side: BorderSide(
+            color: isDark ? const Color(0xFF30405E) : const Color(0xFFD3DCF3),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -83,8 +86,12 @@ class ProjectCard extends StatelessWidget {
             childrenPadding: EdgeInsets.zero,
             shape: Border.all(color: Colors.transparent),
             collapsedShape: Border.all(color: Colors.transparent),
-            iconColor: const Color(0xFFAAC0FF),
-            collapsedIconColor: const Color(0xFFAAC0FF),
+            iconColor: isDark
+                ? const Color(0xFFAAC0FF)
+                : const Color(0xFF4E6494),
+            collapsedIconColor: isDark
+                ? const Color(0xFFAAC0FF)
+                : const Color(0xFF4E6494),
             title: Text(
               project.title,
               style: theme.textTheme.titleLarge?.copyWith(
@@ -95,7 +102,11 @@ class ProjectCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 project.subtitle,
-                style: const TextStyle(color: Color(0xFFB8C8E8)),
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFFB8C8E8)
+                      : const Color(0xFF465A83),
+                ),
               ),
             ),
             onExpansionChanged: onExpanded,
@@ -124,7 +135,12 @@ class ProjectCard extends StatelessWidget {
               const SizedBox(height: 14),
               Text(
                 project.description,
-                style: const TextStyle(color: Color(0xFFD0DCFA), height: 1.5),
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFFD0DCFA)
+                      : const Color(0xFF2F3F5E),
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 14),
               _DetailBlock(title: 'Challenge', content: project.challenge),
@@ -200,16 +216,23 @@ class _ProjectImageStrip extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: tileWidth,
-                  color: const Color(0xFF11131A),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF11131A)
+                      : const Color(0xFFE4EBFB),
                   child: CachedNetworkImage(
                     imageUrl: imageUrls[index],
                     fit: BoxFit.contain,
-                    placeholder: (_, placeholderUrl) =>
-                        const ColoredBox(color: Color(0xFF11131A)),
-                    errorWidget: (_, failedUrl, error) => const Center(
+                    placeholder: (_, placeholderUrl) => ColoredBox(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF11131A)
+                          : const Color(0xFFE4EBFB),
+                    ),
+                    errorWidget: (_, failedUrl, error) => Center(
                       child: Icon(
                         Icons.broken_image_outlined,
-                        color: Colors.white54,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white54
+                            : Colors.black45,
                       ),
                     ),
                   ),
@@ -231,26 +254,29 @@ class _DetailBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: const Color(0x661A2740),
-        border: Border.all(color: const Color(0xFF30405E)),
+        color: isDark ? const Color(0x661A2740) : const Color(0xFFF0F5FF),
+        border: Border.all(
+          color: isDark ? const Color(0xFF30405E) : const Color(0xFFD3DCF3),
+        ),
       ),
       child: RichText(
         text: TextSpan(
-          style: const TextStyle(
-            color: Color(0xFFD4E0FA),
+          style: TextStyle(
+            color: isDark ? const Color(0xFFD4E0FA) : const Color(0xFF2F3F5E),
             fontSize: 14,
             height: 1.45,
           ),
           children: [
             TextSpan(
               text: '$title: ',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF1C2D4E),
                 fontWeight: FontWeight.w700,
               ),
             ),

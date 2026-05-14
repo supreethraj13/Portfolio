@@ -14,7 +14,13 @@ import '../widgets/contact_form.dart';
 import '../widgets/project_card.dart';
 
 class PortfolioPage extends StatelessWidget {
-  PortfolioPage({super.key});
+  PortfolioPage({
+    required this.isDarkMode,
+    required this.onToggleTheme,
+    super.key,
+  });
+  final bool isDarkMode;
+  final VoidCallback onToggleTheme;
   static const List<Map<String, String>> _defaultAboutItems = [
     {
       'title': 'Education',
@@ -129,6 +135,7 @@ class PortfolioPage extends StatelessWidget {
     required Widget child,
   }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return RepaintBoundary(
       key: key,
       child: Container(
@@ -137,8 +144,10 @@ class PortfolioPage extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          color: const Color(0xCC141C2B),
-          border: Border.all(color: const Color(0xFF2A3650)),
+          color: isDark ? const Color(0xCC141C2B) : const Color(0xF7FFFFFF),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2A3650) : const Color(0xFFD3DCF3),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +170,13 @@ class PortfolioPage extends StatelessWidget {
     );
   }
 
-  Widget _heroSection(BuildContext context, bool mobile, _ProfileContent profile) {
+  Widget _heroSection(
+    BuildContext context,
+    bool mobile,
+    _ProfileContent profile,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final avatarSize = mobile ? 120.0 : 176.0;
     final titleSize = mobile ? 36.0 : 52.0;
     final avatar = ClipOval(
@@ -173,9 +188,13 @@ class PortfolioPage extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => Container(
           width: avatarSize,
           height: avatarSize,
-          color: const Color(0xFF1E2433),
+          color: isDark ? const Color(0xFF1E2433) : const Color(0xFFE2EAFB),
           alignment: Alignment.center,
-          child: const Icon(Icons.person, size: 48, color: Colors.white70),
+          child: Icon(
+            Icons.person,
+            size: 48,
+            color: isDark ? Colors.white70 : const Color(0xFF4A5D84),
+          ),
         ),
       ),
     );
@@ -198,16 +217,16 @@ class PortfolioPage extends StatelessWidget {
           profile.role,
           style: TextStyle(
             fontSize: 20,
-            color: Color(0xFFB8C8E8),
+            color: isDark ? const Color(0xFFB8C8E8) : const Color(0xFF465A83),
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 14),
         Text(
           profile.summary,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
-            color: Color(0xFFD0DCFA),
+            color: isDark ? const Color(0xFFD0DCFA) : const Color(0xFF2F3F5E),
             height: 1.6,
           ),
         ),
@@ -277,7 +296,7 @@ class PortfolioPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          color: const Color(0xFF0E1523),
+          color: isDark ? const Color(0xFF0E1523) : const Color(0xFFFFFFFF),
         ),
         child: Row(
           children: [
@@ -290,7 +309,11 @@ class PortfolioPage extends StatelessWidget {
     );
   }
 
-  Widget _aboutStory(List<Map<String, String>> aboutItems) {
+  Widget _aboutStory(
+    BuildContext context,
+    List<Map<String, String>> aboutItems,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: aboutItems.map((item) {
         return Container(
@@ -298,8 +321,10 @@ class PortfolioPage extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF30405E)),
-            color: const Color(0x99202B40),
+            border: Border.all(
+              color: isDark ? const Color(0xFF30405E) : const Color(0xFFD3DCF3),
+            ),
+            color: isDark ? const Color(0x99202B40) : const Color(0xFFF2F6FF),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,8 +358,10 @@ class PortfolioPage extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       item['body']!,
-                      style: const TextStyle(
-                        color: Color(0xFFD3DDF5),
+                      style: TextStyle(
+                        color: isDark
+                            ? const Color(0xFFD3DDF5)
+                            : const Color(0xFF3A4A69),
                         height: 1.55,
                       ),
                     ),
@@ -351,6 +378,7 @@ class PortfolioPage extends StatelessWidget {
   Widget _skillsGrid(List<String> skills) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         final crossAxisCount = constraints.maxWidth > 900
             ? 4
             : constraints.maxWidth > 600
@@ -378,13 +406,17 @@ class PortfolioPage extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: const Color(0x557C9CFF),
+                          color: isDark
+                              ? const Color(0x557C9CFF)
+                              : const Color(0x337C9CFF),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.auto_awesome,
                           size: 16,
-                          color: Color(0xFFD8E4FF),
+                          color: isDark
+                              ? const Color(0xFFD8E4FF)
+                              : const Color(0xFF49608E),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -485,7 +517,9 @@ class PortfolioPage extends StatelessWidget {
                 ),
                 child: Text(
                   'Could not fetch projects from Firestore: ${state.message}',
-                  style: const TextStyle(color: Color(0xFFFFD7D7)),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
                 ),
               ),
               buildProjectCards(_resumeProjects()),
@@ -496,11 +530,15 @@ class PortfolioPage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 'No Firestore projects found yet. Showing local template projects.',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white70
+                      : Colors.black54,
+                ),
               ),
             ),
             buildProjectCards(_resumeProjects()),
@@ -572,6 +610,15 @@ class PortfolioPage extends StatelessWidget {
         title: const Text('Supreeth Raj'),
         actions: [
           IconButton(
+            onPressed: onToggleTheme,
+            tooltip: isDarkMode
+                ? 'Switch to light mode'
+                : 'Switch to dark mode',
+            icon: Icon(
+              isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            ),
+          ),
+          IconButton(
             onPressed: resumeUrl.isEmpty
                 ? null
                 : () => _openExternalUrl(context, resumeUrl),
@@ -584,6 +631,13 @@ class PortfolioPage extends StatelessWidget {
     return AppBar(
       title: const Text('Supreeth Raj'),
       actions: [
+        IconButton(
+          onPressed: onToggleTheme,
+          tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+          icon: Icon(
+            isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+          ),
+        ),
         ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(right: 6),
@@ -681,11 +735,13 @@ class PortfolioPage extends StatelessWidget {
                 )
               : null,
           body: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFF0A1020), Color(0xFF080A12)],
+                colors: isDarkMode
+                    ? const [Color(0xFF0A1020), Color(0xFF080A12)]
+                    : const [Color(0xFFF4F7FF), Color(0xFFEAF0FF)],
               ),
             ),
             child: SingleChildScrollView(
@@ -712,7 +768,7 @@ class PortfolioPage extends StatelessWidget {
                         context: context,
                         key: _aboutKey,
                         title: 'About',
-                        child: _aboutStory(profile.aboutItems),
+                        child: _aboutStory(context, profile.aboutItems),
                       ),
                       _sectionContainer(
                         context: context,
@@ -729,8 +785,10 @@ class PortfolioPage extends StatelessWidget {
                           children: [
                             Text(
                               profile.contactIntro,
-                              style: const TextStyle(
-                                color: Color(0xFFD0DCFA),
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? const Color(0xFFD0DCFA)
+                                    : const Color(0xFF2F3F5E),
                                 height: 1.5,
                               ),
                             ),
