@@ -84,6 +84,7 @@ class _ContactFormState extends State<ContactForm> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Form(
       key: _formKey,
       child: Column(
@@ -94,9 +95,11 @@ class _ContactFormState extends State<ContactForm> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Share your requirement, idea, or role details.',
-            style: TextStyle(color: Color(0xFFB9C8E8)),
+            style: TextStyle(
+              color: isDark ? const Color(0xFFB9C8E8) : const Color(0xFF4B5D84),
+            ),
           ),
           const SizedBox(height: 14),
           TextFormField(

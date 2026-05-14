@@ -1,3 +1,4 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,8 +14,9 @@ import '../bloc/project_state.dart';
 import '../widgets/contact_form.dart';
 import '../widgets/project_card.dart';
 
-class PortfolioPage extends StatelessWidget {
-  PortfolioPage({super.key});
+class PortfolioPage extends StatefulWidget {
+  const PortfolioPage({super.key});
+
   static const List<Map<String, String>> _defaultAboutItems = [
     {
       'title': 'Education',
@@ -47,6 +49,11 @@ class PortfolioPage extends StatelessWidget {
     'Git/GitHub',
   ];
 
+  @override
+  State<PortfolioPage> createState() => _PortfolioPageState();
+}
+
+class _PortfolioPageState extends State<PortfolioPage> {
   final _homeKey = GlobalKey();
   final _projectsKey = GlobalKey();
   final _aboutKey = GlobalKey();
@@ -92,7 +99,45 @@ class PortfolioPage extends StatelessWidget {
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _openExternalUrl(BuildContext context, String value) async {
+  String? _extractGoogleDriveFileId(Uri uri) {
+    if (!uri.host.contains('drive.google.com')) {
+      return null;
+    }
+
+    final idFromQuery = uri.queryParameters['id']?.trim() ?? '';
+    if (idFromQuery.isNotEmpty) {
+      return idFromQuery;
+    }
+
+    final segments = uri.pathSegments;
+    final fileIndex = segments.indexOf('d');
+    if (fileIndex >= 0 && fileIndex + 1 < segments.length) {
+      final id = segments[fileIndex + 1].trim();
+      if (id.isNotEmpty) {
+        return id;
+      }
+    }
+
+    return null;
+  }
+
+  Uri _normalizeResumeUri(Uri uri) {
+    final fileId = _extractGoogleDriveFileId(uri);
+    if (fileId == null) {
+      return uri;
+    }
+    return Uri.https('drive.usercontent.google.com', '/download', {
+      'id': fileId,
+      'export': 'download',
+      'confirm': 't',
+    });
+  }
+
+  Future<void> _openExternalUrl(
+    BuildContext context,
+    String value, {
+    bool resumeLink = false,
+  }) async {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
       _showLaunchError(context, 'Link is not available.');
@@ -103,9 +148,10 @@ class PortfolioPage extends StatelessWidget {
       _showLaunchError(context, 'Link format is invalid.');
       return;
     }
+    final launchUri = resumeLink ? _normalizeResumeUri(uri) : uri;
     try {
       final launched = await launchUrl(
-        uri,
+        launchUri,
         mode: LaunchMode.externalApplication,
       );
       if (!context.mounted) {
@@ -129,6 +175,7 @@ class PortfolioPage extends StatelessWidget {
     required Widget child,
   }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return RepaintBoundary(
       key: key,
       child: Container(
@@ -137,8 +184,10 @@ class PortfolioPage extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          color: const Color(0xCC141C2B),
-          border: Border.all(color: const Color(0xFF2A3650)),
+          color: isDark ? const Color(0xCC141C2B) : const Color(0xF7FFFFFF),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2A3650) : const Color(0xFFD3DCF3),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +210,13 @@ class PortfolioPage extends StatelessWidget {
     );
   }
 
-  Widget _heroSection(BuildContext context, bool mobile, _ProfileContent profile) {
+  Widget _heroSection(
+    BuildContext context,
+    bool mobile,
+    _ProfileContent profile,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final avatarSize = mobile ? 120.0 : 176.0;
     final titleSize = mobile ? 36.0 : 52.0;
     final avatar = ClipOval(
@@ -173,9 +228,13 @@ class PortfolioPage extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => Container(
           width: avatarSize,
           height: avatarSize,
-          color: const Color(0xFF1E2433),
+          color: isDark ? const Color(0xFF1E2433) : const Color(0xFFE2EAFB),
           alignment: Alignment.center,
-          child: const Icon(Icons.person, size: 48, color: Colors.white70),
+          child: Icon(
+            Icons.person,
+            size: 48,
+            color: isDark ? Colors.white70 : const Color(0xFF4A5D84),
+          ),
         ),
       ),
     );
@@ -198,16 +257,16 @@ class PortfolioPage extends StatelessWidget {
           profile.role,
           style: TextStyle(
             fontSize: 20,
-            color: Color(0xFFB8C8E8),
+            color: isDark ? const Color(0xFFB8C8E8) : const Color(0xFF465A83),
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 14),
         Text(
           profile.summary,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
-            color: Color(0xFFD0DCFA),
+            color: isDark ? const Color(0xFFD0DCFA) : const Color(0xFF2F3F5E),
             height: 1.6,
           ),
         ),
@@ -238,7 +297,11 @@ class PortfolioPage extends StatelessWidget {
             FilledButton.icon(
               onPressed: profile.resumeUrl.isEmpty
                   ? null
-                  : () => _openExternalUrl(context, profile.resumeUrl),
+                  : () => _openExternalUrl(
+                      context,
+                      profile.resumeUrl,
+                      resumeLink: true,
+                    ),
               icon: const Icon(Icons.description_outlined),
               label: const Text('View Resume'),
             ),
@@ -277,7 +340,7 @@ class PortfolioPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          color: const Color(0xFF0E1523),
+          color: isDark ? const Color(0xFF0E1523) : const Color(0xFFFFFFFF),
         ),
         child: Row(
           children: [
@@ -290,7 +353,11 @@ class PortfolioPage extends StatelessWidget {
     );
   }
 
-  Widget _aboutStory(List<Map<String, String>> aboutItems) {
+  Widget _aboutStory(
+    BuildContext context,
+    List<Map<String, String>> aboutItems,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: aboutItems.map((item) {
         return Container(
@@ -298,8 +365,10 @@ class PortfolioPage extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF30405E)),
-            color: const Color(0x99202B40),
+            border: Border.all(
+              color: isDark ? const Color(0xFF30405E) : const Color(0xFFD3DCF3),
+            ),
+            color: isDark ? const Color(0x99202B40) : const Color(0xFFF2F6FF),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,8 +402,10 @@ class PortfolioPage extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       item['body']!,
-                      style: const TextStyle(
-                        color: Color(0xFFD3DDF5),
+                      style: TextStyle(
+                        color: isDark
+                            ? const Color(0xFFD3DDF5)
+                            : const Color(0xFF3A4A69),
                         height: 1.55,
                       ),
                     ),
@@ -351,6 +422,7 @@ class PortfolioPage extends StatelessWidget {
   Widget _skillsGrid(List<String> skills) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         final crossAxisCount = constraints.maxWidth > 900
             ? 4
             : constraints.maxWidth > 600
@@ -378,13 +450,17 @@ class PortfolioPage extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: const Color(0x557C9CFF),
+                          color: isDark
+                              ? const Color(0x557C9CFF)
+                              : const Color(0x337C9CFF),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.auto_awesome,
                           size: 16,
-                          color: Color(0xFFD8E4FF),
+                          color: isDark
+                              ? const Color(0xFFD8E4FF)
+                              : const Color(0xFF49608E),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -485,7 +561,9 @@ class PortfolioPage extends StatelessWidget {
                 ),
                 child: Text(
                   'Could not fetch projects from Firestore: ${state.message}',
-                  style: const TextStyle(color: Color(0xFFFFD7D7)),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
                 ),
               ),
               buildProjectCards(_resumeProjects()),
@@ -496,11 +574,15 @@ class PortfolioPage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 'No Firestore projects found yet. Showing local template projects.',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white70
+                      : Colors.black54,
+                ),
               ),
             ),
             buildProjectCards(_resumeProjects()),
@@ -566,15 +648,23 @@ class PortfolioPage extends StatelessWidget {
     bool mobile,
     String resumeUrl,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final items = _navItems();
     if (mobile) {
       return AppBar(
         title: const Text('Supreeth Raj'),
         actions: [
           IconButton(
+            onPressed: () => _toggleTheme(context),
+            tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+            icon: Icon(
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            ),
+          ),
+          IconButton(
             onPressed: resumeUrl.isEmpty
                 ? null
-                : () => _openExternalUrl(context, resumeUrl),
+                : () => _openExternalUrl(context, resumeUrl, resumeLink: true),
             tooltip: 'Resume',
             icon: const Icon(Icons.description_outlined),
           ),
@@ -584,6 +674,13 @@ class PortfolioPage extends StatelessWidget {
     return AppBar(
       title: const Text('Supreeth Raj'),
       actions: [
+        IconButton(
+          onPressed: () => _toggleTheme(context),
+          tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+          icon: Icon(
+            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+          ),
+        ),
         ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(right: 6),
@@ -595,7 +692,7 @@ class PortfolioPage extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: resumeUrl.isEmpty
                 ? null
-                : () => _openExternalUrl(context, resumeUrl),
+                : () => _openExternalUrl(context, resumeUrl, resumeLink: true),
             icon: const Icon(Icons.description_outlined),
             label: const Text('Resume'),
           ),
@@ -616,6 +713,7 @@ class PortfolioPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final width = MediaQuery.sizeOf(context).width;
     final mobile = width < 900;
     final items = _navItems();
@@ -632,8 +730,8 @@ class PortfolioPage extends StatelessWidget {
       linkedInUrl: _defaultLinkedInUrl,
       contactIntro:
           'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
-      skills: _defaultSkills,
-      aboutItems: _defaultAboutItems,
+      skills: PortfolioPage._defaultSkills,
+      aboutItems: PortfolioPage._defaultAboutItems,
     );
 
     return FutureBuilder<Map<String, dynamic>?>(
@@ -673,7 +771,11 @@ class PortfolioPage extends StatelessWidget {
                         leading: const Icon(Icons.description_outlined),
                         onTap: () async {
                           Navigator.of(context).pop();
-                          await _openExternalUrl(context, profile.resumeUrl);
+                          await _openExternalUrl(
+                            context,
+                            profile.resumeUrl,
+                            resumeLink: true,
+                          );
                         },
                       ),
                     ],
@@ -681,11 +783,13 @@ class PortfolioPage extends StatelessWidget {
                 )
               : null,
           body: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFF0A1020), Color(0xFF080A12)],
+                colors: isDark
+                    ? const [Color(0xFF0A1020), Color(0xFF080A12)]
+                    : const [Color(0xFFF4F7FF), Color(0xFFEAF0FF)],
               ),
             ),
             child: SingleChildScrollView(
@@ -712,7 +816,7 @@ class PortfolioPage extends StatelessWidget {
                         context: context,
                         key: _aboutKey,
                         title: 'About',
-                        child: _aboutStory(profile.aboutItems),
+                        child: _aboutStory(context, profile.aboutItems),
                       ),
                       _sectionContainer(
                         context: context,
@@ -729,8 +833,10 @@ class PortfolioPage extends StatelessWidget {
                           children: [
                             Text(
                               profile.contactIntro,
-                              style: const TextStyle(
-                                color: Color(0xFFD0DCFA),
+                              style: TextStyle(
+                                color: isDark
+                                    ? const Color(0xFFD0DCFA)
+                                    : const Color(0xFF2F3F5E),
                                 height: 1.5,
                               ),
                             ),
@@ -896,4 +1002,13 @@ class _ProfileContent {
     }
     return mapped.isEmpty ? fallback : mapped;
   }
+}
+
+void _toggleTheme(BuildContext context) {
+  final manager = AdaptiveTheme.of(context);
+  if (manager.mode == AdaptiveThemeMode.dark) {
+    manager.setLight();
+    return;
+  }
+  manager.setDark();
 }
