@@ -126,11 +126,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     if (fileId == null) {
       return uri;
     }
-    return Uri.https('drive.usercontent.google.com', '/download', {
-      'id': fileId,
-      'export': 'download',
-      'confirm': 't',
-    });
+    return Uri.https('drive.google.com', '/file/d/$fileId/preview');
   }
 
   Future<void> _openExternalUrl(
