@@ -1,3 +1,4 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,14 +14,9 @@ import '../bloc/project_state.dart';
 import '../widgets/contact_form.dart';
 import '../widgets/project_card.dart';
 
-class PortfolioPage extends StatelessWidget {
-  PortfolioPage({
-    required this.isDarkMode,
-    required this.onToggleTheme,
-    super.key,
-  });
-  final bool isDarkMode;
-  final VoidCallback onToggleTheme;
+class PortfolioPage extends StatefulWidget {
+  const PortfolioPage({super.key});
+
   static const List<Map<String, String>> _defaultAboutItems = [
     {
       'title': 'Education',
@@ -53,6 +49,11 @@ class PortfolioPage extends StatelessWidget {
     'Git/GitHub',
   ];
 
+  @override
+  State<PortfolioPage> createState() => _PortfolioPageState();
+}
+
+class _PortfolioPageState extends State<PortfolioPage> {
   final _homeKey = GlobalKey();
   final _projectsKey = GlobalKey();
   final _aboutKey = GlobalKey();
@@ -98,7 +99,45 @@ class PortfolioPage extends StatelessWidget {
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _openExternalUrl(BuildContext context, String value) async {
+  String? _extractGoogleDriveFileId(Uri uri) {
+    if (!uri.host.contains('drive.google.com')) {
+      return null;
+    }
+
+    final idFromQuery = uri.queryParameters['id']?.trim() ?? '';
+    if (idFromQuery.isNotEmpty) {
+      return idFromQuery;
+    }
+
+    final segments = uri.pathSegments;
+    final fileIndex = segments.indexOf('d');
+    if (fileIndex >= 0 && fileIndex + 1 < segments.length) {
+      final id = segments[fileIndex + 1].trim();
+      if (id.isNotEmpty) {
+        return id;
+      }
+    }
+
+    return null;
+  }
+
+  Uri _normalizeResumeUri(Uri uri) {
+    final fileId = _extractGoogleDriveFileId(uri);
+    if (fileId == null) {
+      return uri;
+    }
+    return Uri.https('drive.usercontent.google.com', '/download', {
+      'id': fileId,
+      'export': 'download',
+      'confirm': 't',
+    });
+  }
+
+  Future<void> _openExternalUrl(
+    BuildContext context,
+    String value, {
+    bool resumeLink = false,
+  }) async {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
       _showLaunchError(context, 'Link is not available.');
@@ -109,9 +148,10 @@ class PortfolioPage extends StatelessWidget {
       _showLaunchError(context, 'Link format is invalid.');
       return;
     }
+    final launchUri = resumeLink ? _normalizeResumeUri(uri) : uri;
     try {
       final launched = await launchUrl(
-        uri,
+        launchUri,
         mode: LaunchMode.externalApplication,
       );
       if (!context.mounted) {
@@ -257,7 +297,11 @@ class PortfolioPage extends StatelessWidget {
             FilledButton.icon(
               onPressed: profile.resumeUrl.isEmpty
                   ? null
-                  : () => _openExternalUrl(context, profile.resumeUrl),
+                  : () => _openExternalUrl(
+                      context,
+                      profile.resumeUrl,
+                      resumeLink: true,
+                    ),
               icon: const Icon(Icons.description_outlined),
               label: const Text('View Resume'),
             ),
@@ -604,24 +648,23 @@ class PortfolioPage extends StatelessWidget {
     bool mobile,
     String resumeUrl,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final items = _navItems();
     if (mobile) {
       return AppBar(
         title: const Text('Supreeth Raj'),
         actions: [
           IconButton(
-            onPressed: onToggleTheme,
-            tooltip: isDarkMode
-                ? 'Switch to light mode'
-                : 'Switch to dark mode',
+            onPressed: () => _toggleTheme(context),
+            tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
             icon: Icon(
-              isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
             ),
           ),
           IconButton(
             onPressed: resumeUrl.isEmpty
                 ? null
-                : () => _openExternalUrl(context, resumeUrl),
+                : () => _openExternalUrl(context, resumeUrl, resumeLink: true),
             tooltip: 'Resume',
             icon: const Icon(Icons.description_outlined),
           ),
@@ -632,10 +675,10 @@ class PortfolioPage extends StatelessWidget {
       title: const Text('Supreeth Raj'),
       actions: [
         IconButton(
-          onPressed: onToggleTheme,
-          tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+          onPressed: () => _toggleTheme(context),
+          tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
           icon: Icon(
-            isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
           ),
         ),
         ...items.map(
@@ -649,7 +692,7 @@ class PortfolioPage extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: resumeUrl.isEmpty
                 ? null
-                : () => _openExternalUrl(context, resumeUrl),
+                : () => _openExternalUrl(context, resumeUrl, resumeLink: true),
             icon: const Icon(Icons.description_outlined),
             label: const Text('Resume'),
           ),
@@ -670,6 +713,7 @@ class PortfolioPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final width = MediaQuery.sizeOf(context).width;
     final mobile = width < 900;
     final items = _navItems();
@@ -686,8 +730,8 @@ class PortfolioPage extends StatelessWidget {
       linkedInUrl: _defaultLinkedInUrl,
       contactIntro:
           'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
-      skills: _defaultSkills,
-      aboutItems: _defaultAboutItems,
+      skills: PortfolioPage._defaultSkills,
+      aboutItems: PortfolioPage._defaultAboutItems,
     );
 
     return FutureBuilder<Map<String, dynamic>?>(
@@ -727,7 +771,11 @@ class PortfolioPage extends StatelessWidget {
                         leading: const Icon(Icons.description_outlined),
                         onTap: () async {
                           Navigator.of(context).pop();
-                          await _openExternalUrl(context, profile.resumeUrl);
+                          await _openExternalUrl(
+                            context,
+                            profile.resumeUrl,
+                            resumeLink: true,
+                          );
                         },
                       ),
                     ],
@@ -739,7 +787,7 @@ class PortfolioPage extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: isDarkMode
+                colors: isDark
                     ? const [Color(0xFF0A1020), Color(0xFF080A12)]
                     : const [Color(0xFFF4F7FF), Color(0xFFEAF0FF)],
               ),
@@ -786,7 +834,7 @@ class PortfolioPage extends StatelessWidget {
                             Text(
                               profile.contactIntro,
                               style: TextStyle(
-                                color: isDarkMode
+                                color: isDark
                                     ? const Color(0xFFD0DCFA)
                                     : const Color(0xFF2F3F5E),
                                 height: 1.5,
@@ -954,4 +1002,13 @@ class _ProfileContent {
     }
     return mapped.isEmpty ? fallback : mapped;
   }
+}
+
+void _toggleTheme(BuildContext context) {
+  final manager = AdaptiveTheme.of(context);
+  if (manager.mode == AdaptiveThemeMode.dark) {
+    manager.setLight();
+    return;
+  }
+  manager.setDark();
 }
