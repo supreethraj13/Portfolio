@@ -24,11 +24,6 @@ class PortfolioPage extends StatefulWidget {
           'Pursuing BE in Information Science at Sir M Visvesvaraya Institute of Technology (2023-2027) with 8.1 GPA, after scoring 86% at MES Kishore Kendra PU College.',
     },
     {
-      'title': 'Experience',
-      'body':
-          'Mobile App Developer Intern at WhiterApps (Jan 2026 - Present), architecting cross-platform Flutter apps with BLoC and integrating Firebase for real-time sync, cloud storage, and secure auth.',
-    },
-    {
       'title': 'Leadership & Learning',
       'body':
           'Solved 190+ LeetCode problems, mentored 25+ students in Flutter during CSOC, and contributed to TechHub and GLUG workshops and ideathons.',
@@ -48,6 +43,16 @@ class PortfolioPage extends StatefulWidget {
     'MongoDB',
     'Git/GitHub',
   ];
+  static const List<_ExperienceItem> _defaultExperiences = [
+    _ExperienceItem(
+      companyName: 'WhiterApps',
+      role: 'Mobile App Developer Intern',
+      time: 'Jan 2026 - Present',
+      mode: 'Remote',
+      about:
+          'Architecting cross-platform Flutter apps with BLoC and integrating Firebase for real-time sync, cloud storage, and secure auth.',
+    ),
+  ];
 
   @override
   State<PortfolioPage> createState() => _PortfolioPageState();
@@ -57,6 +62,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   final _homeKey = GlobalKey();
   final _projectsKey = GlobalKey();
   final _aboutKey = GlobalKey();
+  final _experienceKey = GlobalKey();
   final _skillsKey = GlobalKey();
   final _contactKey = GlobalKey();
 
@@ -415,6 +421,106 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
   }
 
+  Widget _experienceStory(
+    BuildContext context,
+    List<_ExperienceItem> experiences,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      children: experiences.map((experience) {
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF30405E) : const Color(0xFFD3DCF3),
+            ),
+            color: isDark ? const Color(0x99202B40) : const Color(0xFFF2F6FF),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                margin: const EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF22D3EE).withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.work_outline,
+                  size: 18,
+                  color: Color(0xFF22D3EE),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      experience.companyName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 19,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      experience.role,
+                      style: TextStyle(
+                        color: isDark
+                            ? const Color(0xFFD8E4FF)
+                            : const Color(0xFF49608E),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (experience.time.isNotEmpty ||
+                        experience.mode.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (experience.time.isNotEmpty)
+                            Chip(
+                              avatar: const Icon(Icons.schedule, size: 16),
+                              label: Text(experience.time),
+                            ),
+                          if (experience.mode.isNotEmpty)
+                            Chip(
+                              avatar: const Icon(
+                                Icons.business_center_outlined,
+                                size: 16,
+                              ),
+                              label: Text(experience.mode),
+                            ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      experience.about,
+                      style: TextStyle(
+                        color: isDark
+                            ? const Color(0xFFD3DDF5)
+                            : const Color(0xFF3A4A69),
+                        height: 1.55,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _skillsGrid(List<String> skills) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -702,6 +808,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
       _NavItem('Home', () => _scrollTo(_homeKey)),
       _NavItem('Projects', () => _scrollTo(_projectsKey)),
       _NavItem('About', () => _scrollTo(_aboutKey)),
+      _NavItem('Experience', () => _scrollTo(_experienceKey)),
       _NavItem('Skills', () => _scrollTo(_skillsKey)),
       _NavItem('Contact', () => _scrollTo(_contactKey)),
     ];
@@ -728,6 +835,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
           'Open to internships and collaboration opportunities. Reach out and I will get back quickly.',
       skills: PortfolioPage._defaultSkills,
       aboutItems: PortfolioPage._defaultAboutItems,
+      experiences: PortfolioPage._defaultExperiences,
     );
 
     return FutureBuilder<Map<String, dynamic>?>(
@@ -813,6 +921,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
                         key: _aboutKey,
                         title: 'About',
                         child: _aboutStory(context, profile.aboutItems),
+                      ),
+                      _sectionContainer(
+                        context: context,
+                        key: _experienceKey,
+                        title: 'Experience',
+                        child: _experienceStory(context, profile.experiences),
                       ),
                       _sectionContainer(
                         context: context,
@@ -911,6 +1025,22 @@ class _NavItem {
   final Future<void> Function() onTap;
 }
 
+class _ExperienceItem {
+  const _ExperienceItem({
+    required this.companyName,
+    required this.role,
+    required this.time,
+    required this.mode,
+    required this.about,
+  });
+
+  final String companyName;
+  final String role;
+  final String time;
+  final String mode;
+  final String about;
+}
+
 class _ProfileContent {
   const _ProfileContent({
     required this.name,
@@ -925,6 +1055,7 @@ class _ProfileContent {
     required this.contactIntro,
     required this.skills,
     required this.aboutItems,
+    required this.experiences,
   });
 
   final String name;
@@ -939,6 +1070,7 @@ class _ProfileContent {
   final String contactIntro;
   final List<String> skills;
   final List<Map<String, String>> aboutItems;
+  final List<_ExperienceItem> experiences;
 
   factory _ProfileContent.fromMap(
     Map<String, dynamic>? raw,
@@ -958,6 +1090,7 @@ class _ProfileContent {
       contactIntro: _string(source['contactIntro'], fallback.contactIntro),
       skills: _stringList(source['skills'], fallback.skills),
       aboutItems: _aboutList(source['aboutItems'], fallback.aboutItems),
+      experiences: _experienceList(source['experiences'], fallback.experiences),
     );
   }
 
@@ -995,6 +1128,39 @@ class _ProfileContent {
         continue;
       }
       mapped.add({'title': title, 'body': body});
+    }
+    return mapped.isEmpty ? fallback : mapped;
+  }
+
+  static List<_ExperienceItem> _experienceList(
+    Object? value,
+    List<_ExperienceItem> fallback,
+  ) {
+    if (value is! List) {
+      return fallback;
+    }
+    final mapped = <_ExperienceItem>[];
+    for (final item in value) {
+      if (item is! Map) {
+        continue;
+      }
+      final companyName = item['companyName']?.toString().trim() ?? '';
+      final role = item['role']?.toString().trim() ?? '';
+      final time = item['time']?.toString().trim() ?? '';
+      final mode = item['mode']?.toString().trim() ?? '';
+      final about = item['about']?.toString().trim() ?? '';
+      if (companyName.isEmpty || role.isEmpty || about.isEmpty) {
+        continue;
+      }
+      mapped.add(
+        _ExperienceItem(
+          companyName: companyName,
+          role: role,
+          time: time,
+          mode: mode,
+          about: about,
+        ),
+      );
     }
     return mapped.isEmpty ? fallback : mapped;
   }
