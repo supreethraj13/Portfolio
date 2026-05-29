@@ -402,9 +402,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text(
+                    _markdownText(
                       item['body']!,
-                      style: TextStyle(
+                      TextStyle(
                         color: isDark
                             ? const Color(0xFFD3DDF5)
                             : const Color(0xFF3A4A69),
@@ -502,9 +502,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       ),
                     ],
                     const SizedBox(height: 8),
-                    Text(
+                    _markdownText(
                       experience.about,
-                      style: TextStyle(
+                      TextStyle(
                         color: isDark
                             ? const Color(0xFFD3DDF5)
                             : const Color(0xFF3A4A69),
@@ -519,6 +519,25 @@ class _PortfolioPageState extends State<PortfolioPage> {
         );
       }).toList(),
     );
+  }
+
+  Widget _markdownText(String text, TextStyle style) {
+    final spans = <TextSpan>[];
+    var bold = false;
+
+    for (final part in text.split('**')) {
+      if (part.isNotEmpty) {
+        spans.add(
+          TextSpan(
+            text: part,
+            style: bold ? const TextStyle(fontWeight: FontWeight.w700) : null,
+          ),
+        );
+      }
+      bold = !bold;
+    }
+
+    return Text.rich(TextSpan(style: style, children: spans));
   }
 
   Widget _skillsGrid(List<String> skills) {
