@@ -200,10 +200,11 @@ class _ProjectImageStrip extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 520;
-        final double tileHeight = compact ? 280.0 : 340.0;
-        final double tileWidth = compact
-            ? (constraints.maxWidth * 0.72).clamp(170.0, 210.0).toDouble()
-            : 220.0;
+        final double tileHeight = compact ? 280.0 : 300.0;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final frameColor = isDark
+            ? const Color(0xFF0D111A)
+            : const Color(0xFFEAF0FF);
 
         return SizedBox(
           height: tileHeight,
@@ -212,36 +213,140 @@ class _ProjectImageStrip extends StatelessWidget {
             itemCount: imageUrls.length,
             separatorBuilder: (_, index) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: tileWidth,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF11131A)
-                      : const Color(0xFFE4EBFB),
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrls[index],
-                    fit: BoxFit.contain,
-                    placeholder: (_, placeholderUrl) => ColoredBox(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF11131A)
-                          : const Color(0xFFE4EBFB),
-                    ),
-                    errorWidget: (_, failedUrl, error) => Center(
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white54
-                            : Colors.black45,
-                      ),
-                    ),
-                  ),
-                ),
+              return _ProjectImageTile(
+                imageUrl: imageUrls[index],
+                height: tileHeight,
+                minWidth: compact ? 150.0 : 170.0,
+                maxWidth: compact
+                    ? (constraints.maxWidth * 0.88)
+                          .clamp(260.0, 380.0)
+                          .toDouble()
+                    : (constraints.maxWidth * 0.42)
+                          .clamp(340.0, 500.0)
+                          .toDouble(),
+                frameColor: frameColor,
+                borderColor: isDark
+                    ? const Color(0xFF25334F)
+                    : const Color(0xFFD3DCF3),
+                errorColor: isDark ? Colors.white54 : Colors.black45,
               );
             },
           ),
         );
       },
+    );
+  }
+}
+
+class _ProjectImageTile extends StatefulWidget {
+  const _ProjectImageTile({
+    required this.imageUrl,
+    required this.height,
+    required this.minWidth,
+    required this.maxWidth,
+    required this.frameColor,
+    required this.borderColor,
+    required this.errorColor,
+  });
+
+  final String imageUrl;
+  final double height;
+  final double minWidth;
+  final double maxWidth;
+  final Color frameColor;
+  final Color borderColor;
+  final Color errorColor;
+
+  @override
+  State<_ProjectImageTile> createState() => _ProjectImageTileState();
+}
+
+class _ProjectImageTileState extends State<_ProjectImageTile> {
+  double? _aspectRatio;
+  ImageStream? _imageStream;
+  ImageStreamListener? _imageListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAspectRatio();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProjectImageTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _aspectRatio = null;
+      _loadAspectRatio();
+    }
+  }
+
+  void _loadAspectRatio() {
+    final previousListener = _imageListener;
+    if (previousListener != null) {
+      _imageStream?.removeListener(previousListener);
+    }
+    final provider = CachedNetworkImageProvider(widget.imageUrl);
+    final stream = provider.resolve(const ImageConfiguration());
+    late final ImageStreamListener listener;
+    listener = ImageStreamListener(
+      (info, _) {
+        final image = info.image;
+        final ratio = image.width / image.height;
+        if (mounted) {
+          setState(() => _aspectRatio = ratio);
+        }
+        stream.removeListener(listener);
+      },
+      onError: (_, _) {
+        stream.removeListener(listener);
+      },
+    );
+    _imageStream = stream;
+    _imageListener = listener;
+    stream.addListener(listener);
+  }
+
+  @override
+  void dispose() {
+    final listener = _imageListener;
+    if (listener != null) {
+      _imageStream?.removeListener(listener);
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = _aspectRatio ?? 16 / 9;
+    final width = (widget.height * ratio)
+        .clamp(widget.minWidth, widget.maxWidth)
+        .toDouble();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: widget.frameColor,
+          border: Border.all(color: widget.borderColor),
+        ),
+        child: SizedBox(
+          width: width,
+          height: widget.height,
+          child: CachedNetworkImage(
+            imageUrl: widget.imageUrl,
+            fit: BoxFit.contain,
+            placeholder: (_, placeholderUrl) =>
+                ColoredBox(color: widget.frameColor),
+            errorWidget: (_, failedUrl, error) => Center(
+              child: Icon(
+                Icons.broken_image_outlined,
+                color: widget.errorColor,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
